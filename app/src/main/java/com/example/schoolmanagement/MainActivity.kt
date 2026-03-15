@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.schoolmanagement.ui.theme.AttendanceScreen
 import com.example.schoolmanagement.ui.theme.SchoolManagementTheme
+import com.example.schoolmanagement.ui.theme.SubjectScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,26 +29,36 @@ class MainActivity : ComponentActivity() {
                 val pd = PaddingValues()
 
                 val subjects = listOf(
-                    "Math",
-                    "Science",
+                    "Maths",
                     "English",
+                    "Hindi",
+                    "Science",
                     "Physics",
                     "Chemistry",
-                    "Computer"
+                    "Biology",
+                    "Computer",
+                    "History",
+                    "Geography",
+                    "Economics",
+                    "Civics",
+                    "Moral Values",
+                    "General Knowledge"
                 )
 //                LoginScreen()
 //                WelcomePage()
 //               SelectionTeacher()
-//                StudentDashboard(
-//                    studentName = "Sahil",
-//                    attendancePercentage = 88,
-//                    subjects = subjects,
-//                    onSubjectClick = { subject ->
-//                        // Navigation later
-//                    }
-//                )
-                AttendanceScreen()
+                StudentDashboard(
+                    studentName = "Sahil",
+                    attendancePercentage = 88,
+                    subjects = subjects,
+                    feeDue = true,
+                    onSubjectClick = { subject ->
+                        // Navigation later
+                    }
+                )
+//                AttendanceScreen()
 //               AppNavigation(navController = navController, pd =pd)
+//                SubjectScreen("Maths", navController)
 
             }
         }

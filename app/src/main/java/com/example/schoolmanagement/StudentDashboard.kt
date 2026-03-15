@@ -50,7 +50,10 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.Divider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.ui.geometry.Offset
@@ -60,6 +63,8 @@ import androidx.compose.ui.graphics.PaintingStyle.Companion.Stroke
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.sp
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -70,6 +75,7 @@ fun StudentDashboard(
     studentName: String,
     attendancePercentage: Int,
     subjects: List<String>,
+    feeDue: Boolean, // NEW PARAMETER
     onSubjectClick: (String) -> Unit
 ) {
     var showExitDialog by remember { mutableStateOf(false) }
@@ -95,23 +101,21 @@ fun StudentDashboard(
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFB17BF4) // nice blue
+                    containerColor = Color(0xFFB17BF4)
                 )
             )
         }
     ) { paddingValues ->
+
+        // EXIT APP DIALOG (unchanged)
         if (showExitDialog) {
 
             AlertDialog(
                 onDismissRequest = { showExitDialog = false },
 
-                title = {
-                    Text("Exit App")
-                },
+                title = { Text("Exit App") },
 
-                text = {
-                    Text("Do you want to exit the app?")
-                },
+                text = { Text("Do you want to exit the app?") },
 
                 confirmButton = {
                     TextButton(
@@ -120,7 +124,7 @@ fun StudentDashboard(
                             activity?.finish()
                         }
                     ) {
-                        Text("Yes",modifier = Modifier.padding(2.dp))
+                        Text("Yes", modifier = Modifier.padding(2.dp))
                     }
                 },
 
@@ -128,7 +132,11 @@ fun StudentDashboard(
                     TextButton(
                         onClick = { showExitDialog = false }
                     ) {
-                        Text("No",modifier = Modifier.padding(2.dp), color = Color(0xFFFF0000))
+                        Text(
+                            "No",
+                            modifier = Modifier.padding(2.dp),
+                            color = Color(0xFFFF0000)
+                        )
                     }
                 }
             )
@@ -139,84 +147,101 @@ fun StudentDashboard(
                 .padding(paddingValues)
                 .fillMaxSize()
                 .verticalScroll(rememberScrollState())
-                .padding(16.dp)
         ) {
 
-            // 🕒 Timetable Section (Large Box)
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(300.dp), // Larger than half visible screen
-                shape = RoundedCornerShape(16.dp)
-            ) {
+            // 🔴 Fee Due Notification (appears only when needed)
+            if (feeDue) {
                 Box(
-                    modifier = Modifier.fillMaxSize(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(Color(0xFFD32F2F))
+                        .padding(12.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text("Timetable Image (From DB)")
+                    Text(
+                        text = "⚠ Fee Payment Pending",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold
+                    )
                 }
             }
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 📊 Two Side-by-Side Boxes
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            Column(
+                modifier = Modifier.padding(16.dp)
             ) {
 
-                // Speedometer Placeholder
+                // 🕒 Timetable Section
                 Card(
                     modifier = Modifier
-                        .weight(1f)
-                        .height(150.dp),
+                        .fillMaxWidth()
+                        .height(300.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Box(
-                        contentAlignment = Alignment.Center,
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Speedometer(
-                            score = 98.2f,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .padding(16.dp)
-                        )
+                        Text("Timetable Image (From DB)")
                     }
                 }
 
-                // Attendance Box
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 📊 Two Side-by-Side Boxes
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
-                    AttendanceBox(attendancePercentage)
-                }
-            }
 
-            Spacer(modifier = Modifier.height(24.dp))
+                    Card(
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(150.dp),
+                        shape = RoundedCornerShape(16.dp)
+                    ) {
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier.fillMaxSize()
+                        ) {
+                            Speedometer(
+                                score = 98.2f,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(16.dp)
+                            )
+                        }
+                    }
 
-            // 📚 Subjects Title
-            Text(
-                text = "Subjects",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // Horizontal Scrollable Subject Cards
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                items(subjects) { subject ->
-                    SubjectCard(subject) {
-                        onSubjectClick(subject)
+                    Box(
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        AttendanceBox(attendancePercentage)
                     }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(40.dp))
+                Spacer(modifier = Modifier.height(24.dp))
+
+                // 📚 Subjects Title
+                Text(
+                    text = "Subjects",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.Bold
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(subjects) { subject ->
+                        SubjectCard(subject) {
+                            onSubjectClick(subject)
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(40.dp))
+            }
         }
     }
 }
@@ -254,25 +279,54 @@ fun SubjectCard(
     subjectName: String,
     onClick: () -> Unit
 ) {
+
+    val icon = getSubjectIcon(subjectName)
+
     Card(
         onClick = onClick,
-        modifier = Modifier
-            .size(120.dp),
+        modifier = Modifier.size(130.dp),
         shape = RoundedCornerShape(16.dp),
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
+
+        Column(
             modifier = Modifier.fillMaxSize()
         ) {
-            Text(
-                text = subjectName,
-                fontWeight = FontWeight.SemiBold
+
+            // ICON AREA (takes most space)
+            Box(
+                modifier = Modifier
+                    .weight(0.75f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = icon),
+                    contentDescription = subjectName,
+                    modifier = Modifier.size(100.dp)   // Bigger icon
+                )
+            }
+
+            Divider(
+                thickness = 1.dp,
+                color = Color.LightGray
             )
+
+            // TEXT AREA (small space)
+            Box(
+                modifier = Modifier
+                    .weight(0.25f)
+                    .fillMaxWidth(),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = subjectName,
+                    fontSize = 13.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
         }
     }
-
-
 }
 
 @Composable
