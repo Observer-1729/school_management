@@ -14,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.example.schoolmanagement.ui.theme.AttendanceScreen
 import com.example.schoolmanagement.ui.theme.SchoolManagementTheme
 
 class MainActivity : ComponentActivity() {
@@ -25,10 +26,27 @@ class MainActivity : ComponentActivity() {
             SchoolManagementTheme {
                 val navController = rememberNavController()
                 val pd = PaddingValues()
+
+                val subjects = listOf(
+                    "Math",
+                    "Science",
+                    "English",
+                    "Physics",
+                    "Chemistry",
+                    "Computer"
+                )
 //                LoginScreen()
 //                WelcomePage()
-               SelectionTeacher()
-//                StudentDashboard(true)
+//               SelectionTeacher()
+//                StudentDashboard(
+//                    studentName = "Sahil",
+//                    attendancePercentage = 88,
+//                    subjects = subjects,
+//                    onSubjectClick = { subject ->
+//                        // Navigation later
+//                    }
+//                )
+                AttendanceScreen()
 //               AppNavigation(navController = navController, pd =pd)
 
             }
