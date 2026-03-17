@@ -5,18 +5,8 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.schoolmanagement.ui.theme.AttendanceScreen
 import com.example.schoolmanagement.ui.theme.SchoolManagementTheme
-import com.example.schoolmanagement.ui.theme.SubjectScreen
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -75,14 +65,19 @@ class MainActivity : ComponentActivity() {
 //                    }
 //                )
 //                AttendanceScreen()
-//               AppNavigation(navController = navController, pd =pd)
+               AppNavigation(navController = navController)
 //                SubjectScreen("Maths", navController)
 //                ClassTeacherDashboard()
 //                ApplyLeaveForm()
 //                SubjectSelectionScreen("PA1", subjects) { }
 //                MarksEntryScreen("Maths", "PA1", students)
 //                SubjectTeacherDashboard("fuck",{})
-                TeacherUploadScreen("Sharma", {})
+//                TeacherUploadScreen("Sharma", {})
+//                FeeAdminDashboard(navController,"Sahil")
+//                LeaveRequestsContent()
+//                QuarterSelectionPage {  }
+//                StandardSelectionPage {  }
+//                StudentFeePage()
 
 
 

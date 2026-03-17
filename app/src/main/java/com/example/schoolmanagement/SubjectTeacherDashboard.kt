@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.MenuBook
 import androidx.compose.material.icons.filled.MenuBook
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -22,7 +21,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -102,74 +100,97 @@ fun SubjectClassCard(
 @Composable
 fun SubjectTeacherDashboard(
     teacherName: String,
-    onBackClick: () -> Unit
-) {
+    onBackClick: () -> Unit,
+    tabs: (@Composable () -> Unit)? = null,
+    content: @Composable (Modifier) -> Unit
+){
 
     Scaffold(
 
         topBar = {
 
-            TopAppBar(
+            Column {
 
-                title = {
-                    Text(text = teacherName)
-                },
+                TopAppBar(
 
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
+                    title = {
+                        Text(text = teacherName)
+                    },
 
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
-                        )
+                    navigationIcon = {
+                        IconButton(onClick = onBackClick) {
 
-                    }
-                },
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
+                            )
+                        }
+                    },
 
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFF1976D2), // same color as class teacher
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color(0xFF1976D2),
+                        titleContentColor = Color.White,
+                        navigationIconContentColor = Color.White
+                    )
                 )
 
-            )
+                tabs?.invoke()
+
+            }
 
         }
 
     ) { paddingValues ->
 
-        Column(
-            modifier = Modifier
+        content(
+            Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
                 .padding(16.dp)
-        ) {
+        )
 
-            LeaveCard(8, {})
+    }
+}
 
-            Spacer(modifier = Modifier.height(20.dp))
+@Composable
+fun SubjectTeacherDashboardContent(
+    modifier: Modifier,
+    onLeaveClick: () -> Unit,
+    onSubjectClick: (SubjectClass) -> Unit
+){
 
-            Text(
-                text = "Your Classes",
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
+    Column(
+        modifier = modifier
+    ) {
 
-            Spacer(modifier = Modifier.height(10.dp))
+        LeaveCard(8) {
+            onLeaveClick()
+        }
 
-            LazyColumn {
+        Spacer(modifier = Modifier.height(20.dp))
 
-                items(teacherAssignments) { item ->
+        Text(
+            text = "Your Classes",
+            fontSize = 20.sp,
+            fontWeight = FontWeight.Bold
+        )
 
-                    SubjectClassCard(
-                        subject = item.subject,
-                        className = item.className,
-                        onClick = {
-                            // future navigation
-                        }
-                    )
+        Spacer(modifier = Modifier.height(10.dp))
 
-                }
+        LazyColumn {
+
+            items(teacherAssignments) { item ->
+
+                SubjectClassCard(
+                    subject = item.subject,
+                    className = item.className,
+                    onClick = {
+
+                        onSubjectClick(item)
+
+
+                    }
+                )
 
             }
 

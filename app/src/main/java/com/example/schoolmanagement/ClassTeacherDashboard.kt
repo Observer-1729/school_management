@@ -18,7 +18,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material3.Button
@@ -30,7 +29,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SegmentedButtonDefaults.Icon
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -41,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -52,10 +49,74 @@ import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
 import java.io.File
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClassTeacherDashboard(
-    teacherName: String = "Mr. Sharma"
+fun ClassTeacherScaffold(
+    title: String,
+    onBackClick: () -> Unit,
+    actionText: String? = null,          // ✅ NEW
+    onActionClick: (() -> Unit)? = null, // ✅ NEW
+    content: @Composable (Modifier) -> Unit
+) {
+
+    Scaffold(
+
+        topBar = {
+
+            TopAppBar(
+
+                title = { Text(title) },
+
+                navigationIcon = {
+                    IconButton(onClick = onBackClick) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "Back"
+                        )
+                    }
+                },
+
+                actions = {
+                    if (actionText != null && onActionClick != null) {
+                        Text(
+                            text = actionText,
+                            modifier = Modifier
+                                .padding(end = 12.dp)
+                                .clickable { onActionClick() },
+                            color = Color.White,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                },
+
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    titleContentColor = Color.White,
+                    navigationIconContentColor = Color.White
+                )
+
+            )
+        }
+
+    ) { paddingValues ->
+
+        val modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .padding(16.dp)
+
+        content(modifier)
+    }
+}
+
+
+@Composable
+fun ClassTeacherDashboardContent(
+    modifier: Modifier,
+    onApplyLeaveClick: () -> Unit,
+    onAttendanceClick: () -> Unit,
+    onMarksClick: (String) -> Unit
 ) {
 
     var showPicker by remember { mutableStateOf(false) }
@@ -90,66 +151,48 @@ fun ClassTeacherDashboard(
             selectedImageUri = uri
         }
 
-    Scaffold(
-        containerColor = MaterialTheme.colorScheme.background,
-        topBar = {
-            TopAppBar(
-                title = { Text("Class Teacher - $teacherName") },
-                navigationIcon = {
-                    IconButton(onClick = { }) {
-                        Icon(Icons.Default.ArrowBack, contentDescription = null)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary
-                )
-            )
-        }
-    ) { paddingValues ->
+    Column(
+        modifier = modifier
+    ) {
 
-        Column(
-            modifier = Modifier
-                .padding(paddingValues)
-                .padding(16.dp)
-                .fillMaxSize()
-        ) {
-
-            TimeTableCard(
-                imageUri = selectedImageUri,
-                onClick = {
-                    showPicker = true
-                }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            LeaveCard(
-                leavesLeft = 8,
-                onApplyLeaveClick = {
-                    // Navigate to Apply Leave page later
-                }
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            AttendanceCard {
-                // Navigation later
+        TimeTableCard(
+            imageUri = selectedImageUri,
+            onClick = {
+                showPicker = true
             }
+        )
 
-            Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            Text(
-                text = "Enter Marks",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+        LeaveCard(
+            leavesLeft = 8,
+            onApplyLeaveClick = {
+                onApplyLeaveClick()
+            }
+        )
 
-            Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-            ExamGrid()
-
+        AttendanceCard {
+            onAttendanceClick()
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = "EXAMS",
+            fontSize = 18.sp,
+            fontWeight = FontWeight.SemiBold
+        )
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        ExamGrid(
+            onMarksClick = onMarksClick
+        )
     }
 
+    // Bottom Sheet stays OUTSIDE Column
     if (showPicker) {
 
         TimeTablePicker(
@@ -269,7 +312,9 @@ fun AttendanceCard(onClick: () -> Unit) {
 }
 
 @Composable
-fun ExamGrid() {
+fun ExamGrid(
+    onMarksClick: (String) -> Unit
+) {
 
     Column {
 
@@ -278,8 +323,8 @@ fun ExamGrid() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            ExamCard("PA1")
-            ExamCard("PA2")
+            ExamCard("PA1") { onMarksClick("PA1") }
+            ExamCard("PA2") { onMarksClick("PA2") }
 
         }
 
@@ -290,8 +335,8 @@ fun ExamGrid() {
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            ExamCard("PA3")
-            ExamCard("PA4")
+            ExamCard("PA3") { onMarksClick("PA3") }
+            ExamCard("PA4") { onMarksClick("PA4") }
 
         }
 
@@ -300,14 +345,17 @@ fun ExamGrid() {
 }
 
 @Composable
-fun ExamCard(examName: String) {
+fun ExamCard(
+    examName: String,
+    onMarksClick: () -> Unit
+) {
 
     Card(
         modifier = Modifier
             .width(160.dp)
             .height(100.dp)
             .clickable {
-                // Navigate to marks entry
+                onMarksClick()
             },
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
