@@ -2,14 +2,9 @@ package com.example.schoolmanagement
 
 
 import android.net.Uri
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,8 +20,7 @@ import com.github.barteksc.pdfviewer.PDFView
 
 @Composable
 fun PdfScreen(
-    uri: Uri,
-    onBack: () -> Unit
+    uri: Uri
 ) {
 
     var currentPage by remember { mutableStateOf(0) }
@@ -41,8 +35,7 @@ fun PdfScreen(
             factory = { context ->
                 PDFView(context, null).apply {
 
-                    setBackgroundColor(0xFCDBFF
-                    )
+                    setBackgroundColor(0xFCDBFF)
 
                     fromUri(uri)
                         .enableSwipe(true)
@@ -61,17 +54,7 @@ fun PdfScreen(
             }
         )
 
-        //Close Button
-        Icon(imageVector = Icons.Default.Close,
-            contentDescription = null,
-            tint = Color.Black,
-            modifier = Modifier
-                .align(Alignment.TopStart)
-                .padding(16.dp)
-                .clickable { onBack() }
-                .size(22.dp))
-
-        // Page number (Bottom Center)
+        // ✅ Only page indicator (keep this)
         Text(
             text = "$currentPage / $totalPages",
             color = Color.Black,

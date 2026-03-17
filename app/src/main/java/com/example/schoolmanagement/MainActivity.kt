@@ -54,7 +54,7 @@ class MainActivity : ComponentActivity() {
 
 //                LoginScreen()
 //                WelcomePage()
-//               SelectionTeacher()
+////               SelectionTeacher()
 //                StudentDashboard(
 //                    studentName = "Sahil",
 //                    attendancePercentage = 88,
@@ -65,19 +65,8 @@ class MainActivity : ComponentActivity() {
 //                    }
 //                )
 //                AttendanceScreen()
-               AppNavigation(navController = navController)
-//                SubjectScreen("Maths", navController)
-//                ClassTeacherDashboard()
-//                ApplyLeaveForm()
-//                SubjectSelectionScreen("PA1", subjects) { }
-//                MarksEntryScreen("Maths", "PA1", students)
-//                SubjectTeacherDashboard("fuck",{})
-//                TeacherUploadScreen("Sharma", {})
-//                FeeAdminDashboard(navController,"Sahil")
-//                LeaveRequestsContent()
-//                QuarterSelectionPage {  }
-//                StandardSelectionPage {  }
-//                StudentFeePage()
+              AppNavigation(navController = navController)
+
 
 
 

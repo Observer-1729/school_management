@@ -1,7 +1,18 @@
 package com.example.schoolmanagement
 
 import android.app.Activity
+import android.net.Uri
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -10,8 +21,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,7 +46,7 @@ fun AppNavigation(navController: NavHostController) {
         )
     }
 
-    NavHost(navController, startDestination = "Class Dashboard") {
+    NavHost(navController, startDestination = "Subject Dashboard") {
 
         composable("splash") {
             SplashScreen(navController)
@@ -187,9 +200,32 @@ fun AppNavigation(navController: NavHostController) {
             }
 
         }
+
+
+//        composable("HW and Notes") {
+//
+//            TeacherUploadScreen(
+//                teacherName = "Add Notes / Homework",
+//                onBackClick = { navController.popBackStack() }
+//            )
+//
+//        }
+
         composable("HW and Notes") {
 
             var selectedTab by remember { mutableStateOf(0) }
+
+            val context = LocalContext.current
+
+            val pdfPicker = rememberLauncherForActivityResult(
+                contract = ActivityResultContracts.GetContent()
+            ) { uri ->
+
+                if (uri != null) {
+                    Toast.makeText(context, "PDF Selected", Toast.LENGTH_SHORT).show()
+                }
+
+            }
 
             SubjectTeacherDashboard(
                 teacherName = "Add Notes / Homework",
@@ -217,14 +253,50 @@ fun AppNavigation(navController: NavHostController) {
 
                     }
 
+                },
+
+                floatingActionButton = {
+
+                    ExtendedFloatingActionButton(
+
+                        onClick = {
+                            pdfPicker.launch("application/pdf")
+                        },
+
+                        containerColor = Color(0xFF1976D2)
+
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            tint = Color.White
+                        )
+
+                        Spacer(Modifier.width(6.dp))
+
+                        Text(
+                            if (selectedTab == 0) "Upload Note" else "Upload Homework",
+                            color = Color.White
+                        )
+
+                    }
+
                 }
 
             ) { modifier ->
 
-                SubjectScreen(
-                    modifier = modifier,
-                    selectedTab = selectedTab
-                )
+                Column(modifier = modifier) {
+
+                    when (selectedTab) {
+
+                        0 -> NotesContent()
+
+                        1 -> HomeworkContent()
+
+                    }
+
+                }
 
             }
 
@@ -340,6 +412,85 @@ fun AppNavigation(navController: NavHostController) {
                     students = students
                 )
 
+            }
+        }
+
+        composable("student_dashboard") {
+
+            StudentDashboard(
+                studentName = "Sahil",
+                attendancePercentage = 85,
+                subjects = listOf("Maths", "Science", "English"),
+                feeDue = true,
+
+                onSubjectClick = { subject ->
+                    navController.navigate("student_subject/${Uri.encode(subject)}")
+                }
+            )
+        }
+
+        composable("student_subject/{subject}") { backStackEntry ->
+
+            val subject = backStackEntry.arguments?.getString("subject") ?: ""
+
+            var selectedTab by remember { mutableStateOf(0) }
+
+            // 🔥 PDF STATE
+            var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+            var selectedPdfTitle by remember { mutableStateOf("") }
+
+            val isPdfOpen = selectedPdfUri != null
+
+            StudentScaffold(
+                title = if (isPdfOpen) selectedPdfTitle else subject,
+
+                isPdfScreen = isPdfOpen,
+
+                onBackClick = {
+                    if (isPdfOpen) {
+                        selectedPdfUri = null   // 🔥 close PDF
+                    } else {
+                        navController.popBackStack()
+                    }
+                },
+
+                showTabs = !isPdfOpen,
+                selectedTabIndex = selectedTab,
+
+                tabs = {
+                    Tab(
+                        selected = selectedTab == 0,
+                        onClick = { selectedTab = 0 },
+                        text = { Text("Notes") }
+                    )
+
+                    Tab(
+                        selected = selectedTab == 1,
+                        onClick = { selectedTab = 1 },
+                        text = { Text("Homework") }
+                    )
+                }
+
+            ) { padding ->
+
+                if (isPdfOpen) {
+
+                    PdfScreen(
+                        uri = selectedPdfUri!!
+                    )
+
+                } else {
+
+                    SubjectScreen(
+                        modifier = Modifier.padding(padding),
+                        selectedTab = selectedTab,
+
+                        onPdfOpen = { title, uri ->
+                            selectedPdfTitle = title
+                            selectedPdfUri = uri
+                        }
+                    )
+                }
             }
         }
     }

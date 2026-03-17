@@ -18,129 +18,92 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.schoolmanagement.PdfScreen
 
 @Composable
 fun SubjectScreen(
     modifier: Modifier,
-    selectedTab: Int
+    selectedTab: Int,
+    onPdfOpen: (String, Uri) -> Unit   // 🔥 IMPORTANT
 ) {
 
     Column(modifier = modifier) {
 
         if (selectedTab == 0) {
-            NotesSection()
+            NotesSection(onPdfOpen)
         } else {
-            HomeworkSection()
+            HomeworkSection(onPdfOpen)
         }
-
     }
 }
 
 @Composable
 fun NotesSection(
+    onPdfOpen: (String, Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val placeholderNotes = List(6) { "Notes PDF ${it + 1}" }
 
-    var selectedPdf by remember { mutableStateOf<Uri?>(null) }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
 
-    if (selectedPdf != null) {
+        items(placeholderNotes) { title ->
 
-        PdfScreen(
-            uri = selectedPdf!!,
-            onBack = { selectedPdf = null }
-        )
-
-    } else {
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            items(placeholderNotes) { title ->
-
-                PdfCard(
-                    title = title,
-                    date = "DD MMM YYYY",
-                    onClick = {
-
-                        // Placeholder URI (replace later with Firebase PDF)
-                        selectedPdf = Uri.parse(
-                            "android.resource://com.example.schoolmanagement/raw/sample"
-                        )
-
-                    }
-                )
-
-            }
-
+            PdfCard(
+                title = title,
+                date = "DD MMM YYYY",
+                onClick = {
+                    val uri = Uri.parse(
+                        "android.resource://com.example.schoolmanagement/raw/sample"
+                    )
+                    onPdfOpen(title, uri)   // 🔥 SEND EVENT UP
+                }
+            )
         }
-
     }
 }
 
 @Composable
 fun HomeworkSection(
+    onPdfOpen: (String, Uri) -> Unit,
     modifier: Modifier = Modifier
 ) {
 
     val homework = List(6) { "Homework ${it + 1}" }
 
-    var selectedPdf by remember { mutableStateOf<Uri?>(null) }
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
 
-    if (selectedPdf != null) {
+        items(homework) { title ->
 
-        PdfScreen(
-            uri = selectedPdf!!,
-            onBack = { selectedPdf = null }
-        )
-
-    } else {
-
-        LazyVerticalGrid(
-            columns = GridCells.Fixed(2),
-            modifier = modifier
-                .fillMaxSize()
-                .padding(12.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-
-            items(homework) { title ->
-
-                PdfCard(
-                    title = title,
-                    date = "DD MMM YYYY",
-                    onClick = {
-
-                        // Placeholder PDF Uri
-                        selectedPdf = Uri.parse(
-                            "android.resource://com.example.schoolmanagement/raw/sample"
-                        )
-
-                    }
-                )
-
-            }
-
+            PdfCard(
+                title = title,
+                date = "DD MMM YYYY",
+                onClick = {
+                    val uri = Uri.parse(
+                        "android.resource://com.example.schoolmanagement/raw/sample"
+                    )
+                    onPdfOpen(title, uri)   // 🔥 SEND EVENT UP
+                }
+            )
         }
-
     }
 }
 
