@@ -17,6 +17,8 @@ class MainActivity : ComponentActivity() {
             SchoolManagementTheme {
                 val navController = rememberNavController()
                 val pd = PaddingValues()
+                initCloudinary(this)
+
 
                 val students = listOf(
                     Student(1,"Rahul Patel"),
@@ -66,6 +68,8 @@ class MainActivity : ComponentActivity() {
 //                )
 //                AttendanceScreen()
               AppNavigation(navController = navController)
+//                FixStudentNamesScreen()
+
 
 
 

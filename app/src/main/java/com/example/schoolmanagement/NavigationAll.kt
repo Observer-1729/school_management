@@ -46,36 +46,100 @@ fun AppNavigation(navController: NavHostController) {
         )
     }
 
-    NavHost(navController, startDestination = "Subject Dashboard") {
+    NavHost(navController, startDestination = "splash") {
 
         composable("splash") {
             SplashScreen(navController)
         }
 
         composable("login") {
+//            LoginScreen(
+//                onNavigate = { name, role, roles ->
+//
+//                    if (role == "student") {
+//                        navController.navigate("student_dashboard")
+//                    } else {
+//                        navController.navigate("selection/${roles.joinToString(",")}")
+//                    }
+//                }
+//            )
+
             LoginScreen(
-                onNavigateToWelcome = { navController.navigate("welcome") }
+                onNavigate = { name, role, roles,standard ->
+
+                    val rolesString = roles.joinToString(",")
+
+                    navController.navigate("welcome/$name/$role/$rolesString/$standard")
+                }
             )
         }
 
-        composable("welcome") {
-            WelcomePage()
+        composable("welcome/{name}/{role}/{roles}/{standard}") { backStackEntry ->
+
+            val name = backStackEntry.arguments?.getString("name") ?: "User"
+            val role = backStackEntry.arguments?.getString("role") ?: "student"
+            val rolesString = backStackEntry.arguments?.getString("roles") ?: ""
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
+
+            val rolesList = if (rolesString.isEmpty()) emptyList()
+            else rolesString.split(",")
+
+            WelcomePage(
+                name = name,
+                role = role,
+                onNavigateNext = {
+
+                    if (role == "student") {
+                        navController.navigate("student_dashboard/$name/$standard")
+                    } else {
+                        navController.navigate("selection/$rolesString/$name/$standard")
+                    }
+                }
+            )
         }
 
-        composable("selection") {
+        composable("selection/{roles}/{name}/{standard}") { backStackEntry ->
+
+            val rolesString = backStackEntry.arguments?.getString("roles") ?: ""
+            val name = backStackEntry.arguments?.getString("name") ?: ""
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
+            val rolesList = if (rolesString.isEmpty()) emptyList()
+            else rolesString.split(",")
+
+            SelectionTeacher(
+                roles = rolesList,
+                onRoleSelected = { selectedRole ->
+
+                    when (selectedRole) {
+
+                        "class_teacher" -> {
+                            navController.navigate("Class Dashboard/$name/$standard")
+                        }
+
+                        "subject_teacher" -> {
+                            navController.navigate("Subject Dashboard/$name")
+                        }
+
+                        "fee_admin" -> {
+                            navController.navigate("feeAdmin Dashboard/$name")
+                        }
+                    }
+                }
+            )
         }
 
         // DASHBOARD
-        composable("feeAdmin Dashboard") {
+        composable("feeAdmin Dashboard/{name}") {backStackEntry->
+            val name = backStackEntry.arguments?.getString("name") ?: ""
 
             FeeAdminScaffold(
                 navController = navController,
-                title = "Ramesh Patel",
+                title = name,
                 onBackClick = { showExitDialog = true }
             ) { padding ->
 
                 FeeAdminDashboard(
-                    adminName = "Ramesh Patel",
+                    adminName = name,
                     paddingValues = padding,
                     onLeaveApprovalClick = {
                         navController.navigate("leave Approval")
@@ -165,10 +229,11 @@ fun AppNavigation(navController: NavHostController) {
 
 
 
-        composable("Subject Dashboard") {
+        composable("Subject Dashboard/{name}") { backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name") ?: ""
 
             SubjectTeacherDashboard(
-                teacherName = "Ramesh Patel",
+                teacherName = name,
                 onBackClick = { showExitDialog = true }
             ) { modifier ->
 
@@ -202,14 +267,6 @@ fun AppNavigation(navController: NavHostController) {
         }
 
 
-//        composable("HW and Notes") {
-//
-//            TeacherUploadScreen(
-//                teacherName = "Add Notes / Homework",
-//                onBackClick = { navController.popBackStack() }
-//            )
-//
-//        }
 
         composable("HW and Notes") {
 
@@ -304,38 +361,45 @@ fun AppNavigation(navController: NavHostController) {
 
 
 
-        composable("Class Dashboard") {
+        composable("Class Dashboard/{name}/{standard}") {backStackEntry ->
+            val name = backStackEntry.arguments?.getString("name") ?: ""
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
 
             ClassTeacherScaffold(
-                title = "Class Teacher",
+                title = name,
+                standard = standard,
                 onBackClick = { showExitDialog = true }
             ) { modifier ->
 
                 ClassTeacherDashboardContent(
                     modifier = modifier,
+                    standard = standard,
 
                     onApplyLeaveClick = {
                         navController.navigate("Leave Form")
                     },
 
                     onAttendanceClick = {
-                        navController.navigate("Attendance Page")
+                        navController.navigate("Attendance Page/$standard")
                     },
 
                     onMarksClick = { exam ->
-                        navController.navigate("Subject selection/$exam")
+                        navController.navigate("Subject selection/$exam/$standard")
                     }
                 )
 
             }
         }
-        composable("Attendance Page") {
+        composable("Attendance Page/{standard}") {backStackEntry->
 
             val context = LocalContext.current
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
 
             ClassTeacherScaffold(
                 title = "Attendance",
                 onBackClick = { navController.popBackStack() },
+                standard = standard,
+
 
                 actionText = "Submit",   // ✅ NEW
                 onActionClick = {
@@ -355,14 +419,15 @@ fun AppNavigation(navController: NavHostController) {
             }
         }
 
-        composable("Subject selection/{examName}") { backStackEntry ->
+        composable("Subject selection/{examName}/{standard}") { backStackEntry ->
 
             val examName = backStackEntry.arguments?.getString("examName") ?: "PA1"
-
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
             val subjects = listOf("Maths","Science","English","Hindi")
 
             ClassTeacherScaffold(
                 title = "Select Subject",
+                standard = standard,
                 onBackClick = { navController.popBackStack() }
             ) { modifier ->
 
@@ -371,16 +436,17 @@ fun AppNavigation(navController: NavHostController) {
                     examName = examName,
                     subjects = subjects,
                     onSubjectClick = { subject ->
-                        navController.navigate("Marks Entry/$examName/$subject")
+                        navController.navigate("Marks Entry/$examName/$subject/$standard")
                     }
                 )
 
             }
         }
 
-        composable("Marks Entry/{exam}/{subject}") { backStackEntry ->
+        composable("Marks Entry/{exam}/{subject}/{standard}") { backStackEntry ->
 
             val context = LocalContext.current
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
 
             val exam = backStackEntry.arguments?.getString("exam") ?: ""
             val subject = backStackEntry.arguments?.getString("subject") ?: ""
@@ -393,6 +459,8 @@ fun AppNavigation(navController: NavHostController) {
             ClassTeacherScaffold(
                 title = "$subject - $exam",   // 🔥 Better title
                 onBackClick = { navController.popBackStack() },
+                standard = standard,
+
 
                 actionText = "Save",   // ✅ NEW
                 onActionClick = {
@@ -415,12 +483,14 @@ fun AppNavigation(navController: NavHostController) {
             }
         }
 
-        composable("student_dashboard") {
+        composable("student_dashboard/{name}/{standard}") {backStackEntry->
+            val name = backStackEntry.arguments?.getString("name") ?: ""
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
 
             StudentDashboard(
-                studentName = "Sahil",
+                studentName = name,
                 attendancePercentage = 85,
-                subjects = listOf("Maths", "Science", "English"),
+                standard = standard,
                 feeDue = true,
 
                 onSubjectClick = { subject ->

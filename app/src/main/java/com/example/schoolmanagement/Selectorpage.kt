@@ -1,6 +1,5 @@
 package com.example.schoolmanagement
 
-import android.util.Size
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -27,11 +26,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 
 @Composable
-fun SelectionTeacher() {
+fun SelectionTeacher(
+    roles: List<String>,
+    onRoleSelected: (String) -> Unit
+) {
 
     Column(
         modifier = Modifier
@@ -72,14 +73,16 @@ fun SelectionTeacher() {
                     title = "Class Teacher",
                     imageRes = R.drawable.class_teacher,
                     modifier = Modifier.weight(1f),
-                    enabled = true
+                    enabled = roles.contains("class_teacher"),
+                    onClick = { onRoleSelected("class_teacher") }
                 )
 
                 RoleCard(
                     title = "Subject Teacher",
                     imageRes = R.drawable.subject_teacher,
                     modifier = Modifier.weight(1f),
-                    enabled = true
+                    enabled = roles.contains("subject_teacher"),
+                    onClick = { onRoleSelected("subject_teacher") }
                 )
             }
 
@@ -93,7 +96,8 @@ fun SelectionTeacher() {
                     modifier = Modifier
                         .fillMaxWidth(0.5f)
                         .aspectRatio(1f),
-                    enabled = true
+                    enabled = roles.contains("fee_admin"),
+                    onClick = { onRoleSelected("fee_admin") }
                 )
             }
 
@@ -106,8 +110,9 @@ fun SelectionTeacher() {
 fun RoleCard(
     title: String,
     imageRes: Int,
-    enabled: Boolean = true,   // NEW
-    modifier: Modifier = Modifier
+    enabled: Boolean = true,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
 ) {
 
     val containerColor =
@@ -119,7 +124,7 @@ fun RoleCard(
     val contentAlpha = if (enabled) 1f else 0.4f
 
     Card(
-        onClick = { if (enabled) { /* handle click */ } },
+        onClick = { if (enabled) { onClick() } },
         modifier = modifier.aspectRatio(1f),
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(

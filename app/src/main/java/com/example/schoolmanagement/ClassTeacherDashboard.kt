@@ -1,6 +1,7 @@
 package com.example.schoolmanagement
 
 import android.net.Uri
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -33,6 +34,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.FileProvider
 import coil.compose.AsyncImage
+import com.google.firebase.firestore.FirebaseFirestore
 import java.io.File
 
 
@@ -55,8 +58,9 @@ import java.io.File
 fun ClassTeacherScaffold(
     title: String,
     onBackClick: () -> Unit,
-    actionText: String? = null,          // ✅ NEW
-    onActionClick: (() -> Unit)? = null, // ✅ NEW
+    actionText: String? = null,
+    standard: String,
+    onActionClick: (() -> Unit)? = null,
     content: @Composable (Modifier) -> Unit
 ) {
 
@@ -116,7 +120,8 @@ fun ClassTeacherDashboardContent(
     modifier: Modifier,
     onApplyLeaveClick: () -> Unit,
     onAttendanceClick: () -> Unit,
-    onMarksClick: (String) -> Unit
+    onMarksClick: (String) -> Unit,
+    standard: String,
 ) {
 
     var showPicker by remember { mutableStateOf(false) }
@@ -124,6 +129,18 @@ fun ClassTeacherDashboardContent(
     val context = LocalContext.current
 
     var selectedImageUri by remember { mutableStateOf<Uri?>(null) }
+    var timetableUrl by remember { mutableStateOf<String?>(null) }
+
+
+    LaunchedEffect(standard) {
+        FirebaseFirestore.getInstance()
+            .collection("timetables")
+            .document(standard)
+            .get()
+            .addOnSuccessListener { doc ->
+                timetableUrl = doc.getString("fileUrl")
+            }
+    }
 
     val imageFile = remember {
         File.createTempFile("timetable_", ".jpg", context.cacheDir)
@@ -141,6 +158,13 @@ fun ClassTeacherDashboardContent(
         ) { success ->
             if (success) {
                 selectedImageUri = imageUri
+
+                uploadFileToCloudinary(imageUri, standard) { url ->
+
+                    Toast.makeText(context, "Uploaded successfully", Toast.LENGTH_SHORT).show()
+
+                    timetableUrl = url   // 🔥 instant UI update
+                }
             }
         }
 
@@ -148,7 +172,22 @@ fun ClassTeacherDashboardContent(
         rememberLauncherForActivityResult(
             ActivityResultContracts.GetContent()
         ) { uri ->
+
+            if (uri == null) {
+                println("No image selected")
+                return@rememberLauncherForActivityResult
+            }
+
+            println("Gallery image selected: $uri")
+
             selectedImageUri = uri
+
+            uploadFileToCloudinary(uri, standard) { url ->
+
+                Toast.makeText(context, "Uploaded successfully", Toast.LENGTH_SHORT).show()
+
+                timetableUrl = url   // 🔥 instant UI update
+            }
         }
 
     Column(
@@ -157,9 +196,8 @@ fun ClassTeacherDashboardContent(
 
         TimeTableCard(
             imageUri = selectedImageUri,
-            onClick = {
-                showPicker = true
-            }
+            imageUrl = timetableUrl,
+            onClick = { showPicker = true }
         )
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -216,6 +254,7 @@ fun ClassTeacherDashboardContent(
 @Composable
 fun TimeTableCard(
     imageUri: Uri?,
+    imageUrl: String?,
     onClick: () -> Unit
 ) {
 
@@ -234,40 +273,45 @@ fun TimeTableCard(
         ) {
 
             // Show image if timetable exists
-            if (imageUri != null) {
-
-                AsyncImage(
-                    model = imageUri,
-                    contentDescription = "Time Table",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-
-            }
-
-            // Show placeholder only if no timetable
-            if (imageUri == null) {
-
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        modifier = Modifier.size(42.dp)
+            when {
+                imageUri != null -> {
+                    AsyncImage(
+                        model = imageUri,
+                        contentDescription = "Time Table",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
                     )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Text(
-                        text = "Upload Time Table",
-                        fontWeight = FontWeight.Medium,
-                        fontSize = 17.sp
-                    )
-
                 }
 
+                imageUrl != null -> {
+                    AsyncImage(
+                        model = imageUrl,
+                        contentDescription = "Time Table",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop
+                    )
+                }
+
+                else -> {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+
+                        Icon(
+                            imageVector = Icons.Default.CalendarMonth,
+                            contentDescription = null,
+                            modifier = Modifier.size(42.dp)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Upload Time Table",
+                            fontWeight = FontWeight.Medium,
+                            fontSize = 17.sp
+                        )
+                    }
+                }
             }
 
         }

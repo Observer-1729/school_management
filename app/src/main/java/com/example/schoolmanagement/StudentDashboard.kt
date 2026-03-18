@@ -60,6 +60,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -127,12 +129,13 @@ fun StudentScaffold(
 fun StudentDashboard(
     studentName: String,
     attendancePercentage: Int,
-    subjects: List<String>,
-    feeDue: Boolean, // NEW PARAMETER
-    onSubjectClick: (String) -> Unit
+    feeDue: Boolean,
+    onSubjectClick: (String) -> Unit,
+    standard: String,
 ) {
     var showExitDialog by remember { mutableStateOf(false) }
     val activity = LocalActivity.current
+    var subjects by remember { mutableStateOf<List<String>>(emptyList()) }
 
     Scaffold(
         topBar = {
@@ -222,6 +225,34 @@ fun StudentDashboard(
             Column(
                 modifier = Modifier.padding(16.dp)
             ) {
+                var timetableUrl by remember { mutableStateOf<String?>(null) }
+
+                LaunchedEffect(standard) {
+
+                    val db = FirebaseFirestore.getInstance()
+
+                    // 🔵 TIMETABLE
+                    db.collection("timetables")
+                        .document(standard)
+                        .get()
+                        .addOnSuccessListener { doc ->
+                            timetableUrl = doc.getString("fileUrl")
+                        }
+
+                    // 🟢 SUBJECTS
+                    db.collection("standards")
+                        .document(standard)
+                        .collection("subjects")
+                        .get()
+                        .addOnSuccessListener { result ->
+
+                            val subjectList = result.documents.map { it.id }
+
+                            println("Subjects fetched: $subjectList")
+
+                            subjects = subjectList
+                        }
+                }
 
                 // 🕒 Timetable Section
                 Card(
@@ -234,7 +265,19 @@ fun StudentDashboard(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text("Timetable Image (From DB)")
+
+
+                        if (timetableUrl != null) {
+
+                            AsyncImage(
+                                model = timetableUrl,
+                                contentDescription = "Timetable",
+                                modifier = Modifier.fillMaxSize()
+                            )
+
+                        } else {
+                            Text("No timetable uploaded yet")
+                        }
                     }
                 }
 
