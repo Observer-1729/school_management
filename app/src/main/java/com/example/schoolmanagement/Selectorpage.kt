@@ -30,9 +30,11 @@ import androidx.compose.ui.unit.dp
 
 @Composable
 fun SelectionTeacher(
-    roles: List<String>,
+    teacherViewModel: TeacherViewModel,
     onRoleSelected: (String) -> Unit
 ) {
+
+    val roles = teacherViewModel.teacherData.teacherRoles
 
     Column(
         modifier = Modifier
@@ -100,7 +102,6 @@ fun SelectionTeacher(
                     onClick = { onRoleSelected("fee_admin") }
                 )
             }
-
         }
     }
 }

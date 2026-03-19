@@ -127,12 +127,18 @@ fun StudentScaffold(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StudentDashboard(
-    studentName: String,
-    attendancePercentage: Int,
-    feeDue: Boolean,
-    onSubjectClick: (String) -> Unit,
-    standard: String,
+    studentViewModel: StudentViewModel,
+    onSubjectClick: (String) -> Unit
 ) {
+    val student = studentViewModel.studentData
+
+    val studentName = student.name
+    val standard = student.standard
+
+// 🔥 For now (since not in DB yet)
+    val attendancePercentage = 85   // temporary
+    val feeDue = false              // temporary
+
     var showExitDialog by remember { mutableStateOf(false) }
     val activity = LocalActivity.current
     var subjects by remember { mutableStateOf<List<String>>(emptyList()) }

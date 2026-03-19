@@ -68,7 +68,8 @@ class MainActivity : ComponentActivity() {
 //                )
 //                AttendanceScreen()
               AppNavigation(navController = navController)
-//                FixStudentNamesScreen()
+
+
 
 
 

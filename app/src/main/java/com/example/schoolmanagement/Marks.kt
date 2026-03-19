@@ -25,6 +25,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.schoolmanagement.ui.theme.Student
 
 
 @Composable
@@ -32,7 +33,7 @@ fun MarksEntryScreen(
     modifier: Modifier,
     subject: String,
     exam: String,
-    students: List<Student>
+    students: List<com.example.schoolmanagement.ui.theme.Student>
 ) {
 
     val marks = remember {

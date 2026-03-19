@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -38,15 +37,7 @@ data class SubjectClass(
     val className: String
 )
 
-val teacherAssignments = listOf(
-    SubjectClass("Maths", "Class 1"),
-    SubjectClass("Maths", "Class 3"),
-    SubjectClass("Maths", "Class 5"),
-    SubjectClass("Maths", "Class 7"),
-    SubjectClass("Maths", "Class 9"),
-    SubjectClass("Science", "Class 2"),
-    SubjectClass("Science", "Class 4")
-)
+
 
 @Composable
 fun SubjectClassCard(
@@ -168,15 +159,17 @@ fun SubjectTeacherDashboard(
 @Composable
 fun SubjectTeacherDashboardContent(
     modifier: Modifier,
+    teacherViewModel: TeacherViewModel,
     onLeaveClick: () -> Unit,
     onSubjectClick: (SubjectClass) -> Unit
 ){
+    val leavesLeft = teacherViewModel.teacherData.totalLeaves.toInt()
 
     Column(
         modifier = modifier
     ) {
 
-        LeaveCard(8) {
+        LeaveCard(leavesLeft) {
             onLeaveClick()
         }
 
@@ -192,21 +185,27 @@ fun SubjectTeacherDashboardContent(
 
         LazyColumn {
 
-            items(teacherAssignments) { item ->
+            teacherViewModel.subjectAssignments.forEach { assignment ->
 
-                SubjectClassCard(
-                    subject = item.subject,
-                    className = item.className,
-                    onClick = {
+                assignment.standards.forEach { std ->
 
-                        onSubjectClick(item)
+                    item {
 
-
+                        SubjectClassCard(
+                            subject = assignment.subject,
+                            className = "Class $std",
+                            onClick = {
+                                onSubjectClick(
+                                    SubjectClass(
+                                        assignment.subject,
+                                        "Class $std"
+                                    )
+                                )
+                            }
+                        )
                     }
-                )
-
+                }
             }
-
         }
 
     }

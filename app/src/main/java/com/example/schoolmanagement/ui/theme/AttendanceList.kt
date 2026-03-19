@@ -15,25 +15,81 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.example.schoolmanagement.TeacherViewModel
+import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.tasks.await
+import java.text.SimpleDateFormat
+import java.util.Calendar
+import java.util.Date
+import java.util.Locale
 
 @Composable
-fun AttendanceScreen(modifier: Modifier) {
+fun AttendanceScreen(
+    modifier: Modifier,
+    teacherViewModel: TeacherViewModel,
+    students: MutableList<Student>   // 🔥 PASS STATE FROM OUTSIDE
+) {
 
-    val students = remember {
-        mutableStateListOf(
-            Student(1, "Aarav Raval Chutiya asdfghjkhytresxcvhrd"),
-            Student(2, "Riya ASDFGHJRESDHHRDNRRVBHRTBVBTRDBVBFGFVBV"),
-            Student(3, "Kabir"),
-            Student(4, "Ananya"),
-            Student(5, "Vihaan")
-        )
-    }
+    val db = FirebaseFirestore.getInstance()
+
+    val standard = teacherViewModel.teacherData.classTeacherOf ?: ""
+
+    LaunchedEffect(Unit) {
+        val today = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(
+        Date()
+    )
+
+        val calendar = Calendar.getInstance()
+        val isSunday = calendar.get(Calendar.DAY_OF_WEEK) == Calendar.SUNDAY
+
+        val attendanceRef = db.collection("attendance")
+            .document(standard)
+            .collection(today)
+            .document("data")
+        val updatedDoc = attendanceRef.get().await()
+        val attendanceMapFinal = updatedDoc.data ?: emptyMap<String, Any>()
+
+        if (!updatedDoc.exists() || isSunday) {
+
+            val studentResult = db.collection("students")
+                .whereEqualTo("standard", standard)
+                .get()
+                .await()
+
+            val autoMap = studentResult.documents.associate { studentDoc ->
+                val roll = (studentDoc.getLong("rollNumber") ?: 0).toInt()
+                roll.toString() to "present"
+            }
+
+            attendanceRef.set(autoMap)
+        }
+
+        val result = db.collection("students")
+            .whereEqualTo("standard", standard)
+            .get()
+            .await()
+
+                val list = result.documents.map { doc ->
+                    val roll = (doc.getLong("rollNumber") ?: 0).toInt()
+                    val status = attendanceMapFinal[roll.toString()] ?: "present"
+
+                    Student(
+                        rollNo = roll,
+                        name = doc.getString("name") ?: "",
+                        isPresent = status == "present"
+                    )
+                }
+
+                students.clear()
+                students.addAll(list)
+            }
+
+
 
     LazyColumn(modifier = modifier) {
 
@@ -50,6 +106,7 @@ fun AttendanceScreen(modifier: Modifier) {
         }
 
     }
+
 }
 
 

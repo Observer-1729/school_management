@@ -117,12 +117,17 @@ fun ClassTeacherScaffold(
 
 @Composable
 fun ClassTeacherDashboardContent(
+    teacherViewModel: TeacherViewModel,
     modifier: Modifier,
     onApplyLeaveClick: () -> Unit,
     onAttendanceClick: () -> Unit,
     onMarksClick: (String) -> Unit,
-    standard: String,
 ) {
+
+    val teacher = teacherViewModel.teacherData
+
+    val standard = teacher.classTeacherOf ?: ""
+    val leavesLeft = teacher.totalLeaves.toInt()
 
     var showPicker by remember { mutableStateOf(false) }
 
@@ -203,7 +208,7 @@ fun ClassTeacherDashboardContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         LeaveCard(
-            leavesLeft = 8,
+            leavesLeft = leavesLeft,
             onApplyLeaveClick = {
                 onApplyLeaveClick()
             }

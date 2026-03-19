@@ -17,39 +17,51 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
 
-@Composable
 
+@Composable
 fun WelcomePage(
-    name: String,
-    role: String,
+    teacherViewModel: TeacherViewModel,
+    studentViewModel: StudentViewModel,
     onNavigateNext: () -> Unit
-){
+) {
+
+    // 🔥 Decide name based on who logged in
+    val teacherName = teacherViewModel.teacherData.name
+    val studentName = studentViewModel.studentData.name
+
+    val name = if (teacherName.isNotEmpty()) teacherName else studentName
+
     LaunchedEffect(name) {
-    delay(2000) // 2 seconds
-    onNavigateNext()
-}
-    Box(modifier = Modifier.fillMaxSize()
-        .background(MaterialTheme.colorScheme.background),){
-        Column(modifier = Modifier.fillMaxSize(),
+        delay(2000)
+        onNavigateNext()
+    }
+
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center){
-            Text("Welcome,",modifier = Modifier.align(Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.Center
+        ) {
+
+            Text(
+                "Welcome,",
                 fontSize = 60.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Cursive,
                 color = MaterialTheme.colorScheme.onBackground
             )
+
             Text(
                 text = name,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold,
                 fontFamily = FontFamily.Cursive,
                 color = Color(0xFFB17BF4)
             )
-
-
         }
     }
-
 }

@@ -1,6 +1,6 @@
 package com.example.schoolmanagement
 
-import androidx.compose.foundation.clickable
+import android.widget.Toast
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Column
@@ -12,21 +12,16 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -35,18 +30,26 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ApplyLeaveForm() {
+fun ApplyLeaveForm(
+    teacherViewModel: TeacherViewModel
+) {
+    val teacher = teacherViewModel.teacherData
 
-    val leaveBalance = 8
+    val leaveBalance = teacher.totalLeaves.toInt()
+    val teacherId = teacher.userId
+    val teacherName = teacher.name
+
 
     var fromDate by remember { mutableStateOf<Long?>(null) }
     var toDate by remember { mutableStateOf<Long?>(null) }
@@ -66,12 +69,12 @@ fun ApplyLeaveForm() {
     ) {
 
         Text("Employee ID", fontWeight = FontWeight.Medium)
-        Text("TCH1023")
+        Text(teacherId)
 
         Spacer(modifier = Modifier.height(10.dp))
 
         Text("Employee Name", fontWeight = FontWeight.Medium)
-        Text("Mr. Sharma")
+        Text(teacherName)
 
         Spacer(modifier = Modifier.height(10.dp))
 
@@ -145,25 +148,63 @@ fun ApplyLeaveForm() {
                 // REASON FIELD
                 OutlinedTextField(
                     value = reason,
-                    onValueChange = { reason = it },
+                    onValueChange = {
+                        if (it.length <= 50) {
+                            reason = it
+                        }
+                    },
                     label = { Text("Reason for Leave") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(120.dp),
-                    maxLines = 4
+                    maxLines = 2
                 )
 
                 Spacer(modifier = Modifier.height(20.dp))
 
+                val context = LocalContext.current
+
                 Button(
                     onClick = {
 
-                        // Submit leave request
+                        if (fromDate == null || toDate == null || reason.isEmpty()) {
+                            Toast.makeText(context, "Fill all fields", Toast.LENGTH_SHORT).show()
+                            return@Button
+                        }
+
+                        val days = ((toDate!! - fromDate!!) / (1000 * 60 * 60 * 24)).toInt() + 1
+
+                        val leaveData = mapOf(
+                            "teacherId" to teacherId,
+                            "teacherName" to teacherName,
+                            "fromDate" to fromDate,
+                            "toDate" to toDate,
+                            "reason" to reason,
+                            "status" to "pending",
+                            "days" to days,
+                            "standard" to teacher.classTeacherOf,
+                            "role" to teacher.role,
+                            "timestamp" to System.currentTimeMillis()
+                        )
+
+                        val db = FirebaseFirestore.getInstance()
+
+                        db.collection("leaveRequests")
+                            .document()
+                            .set(leaveData)
+                            .addOnSuccessListener {
+                                Toast.makeText(context, "Leave Applied", Toast.LENGTH_SHORT).show()
+                                println("✅ Leave submitted successfully")
+                            }
+                            .addOnFailureListener {
+                                Toast.makeText(context, "Error submitting leave", Toast.LENGTH_SHORT).show()
+                                println("❌ Error submitting leave")
+                            }
 
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Submit")
+                    Text(text  = "Submit")
                 }
 
             }
