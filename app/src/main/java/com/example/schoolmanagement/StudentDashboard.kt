@@ -60,6 +60,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.math.cos
@@ -130,14 +131,26 @@ fun StudentDashboard(
     studentViewModel: StudentViewModel,
     onSubjectClick: (String) -> Unit
 ) {
+
+
+    val attendanceViewModel: AttendanceViewModel = viewModel()
+
+    val attendancePercentage by attendanceViewModel.attendancePercentage
+    val isLoading by attendanceViewModel.isLoading
+
     val student = studentViewModel.studentData
+    var feeDue by remember { mutableStateOf(false) }
 
     val studentName = student.name
     val standard = student.standard
 
-// 🔥 For now (since not in DB yet)
-    val attendancePercentage = 85   // temporary
-    val feeDue = false              // temporary
+
+    LaunchedEffect(Unit) {
+        attendanceViewModel.loadAttendance(
+            standard = standard,
+            rollNo = student.rollNo
+        )
+    }
 
     var showExitDialog by remember { mutableStateOf(false) }
     val activity = LocalActivity.current
@@ -168,6 +181,9 @@ fun StudentDashboard(
             )
         }
     ) { paddingValues ->
+
+        println("🔥 STUDENT ROLL NO: ${student.rollNo}")
+        println("🔥 STANDARD: ${student.standard}")
 
         // EXIT APP DIALOG (unchanged)
         if (showExitDialog) {
@@ -258,6 +274,35 @@ fun StudentDashboard(
 
                             subjects = subjectList
                         }
+
+                    val studentId = student.userId
+
+
+                    db.collection("fees")
+                        .whereEqualTo("studentId", studentId)
+                        .whereEqualTo("standard", standard)
+                        .get()
+                        .addOnSuccessListener { result ->
+
+                            if (!result.isEmpty) {
+
+                                // 🔥 Find latest quarter
+                                val latestDoc = result.documents.maxByOrNull { doc ->
+                                    doc.getString("quarter")?.removePrefix("Q")?.toIntOrNull() ?: 0
+                                }
+
+                                latestDoc?.let { doc ->
+
+                                    val isPaid = doc.getBoolean("isPaid") ?: false
+                                    val reminderSent = doc.getBoolean("reminderSent") ?: false
+
+                                    feeDue = !isPaid && reminderSent
+                                }
+
+                            } else {
+                                feeDue = false
+                            }
+                        }
                 }
 
                 // 🕒 Timetable Section
@@ -317,7 +362,11 @@ fun StudentDashboard(
                     Box(
                         modifier = Modifier.weight(1f)
                     ) {
-                        AttendanceBox(attendancePercentage)
+                        if (isLoading) {
+                            AttendanceBox(0) // or show loading later
+                        } else {
+                            AttendanceBox(attendancePercentage)
+                        }
                     }
                 }
 

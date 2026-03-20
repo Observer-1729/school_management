@@ -142,6 +142,7 @@ data class StudentData(
     val name: String = "",
     val role: String = "",
     val standard: String = "",
+    val rollNo: Int = 0
 
 )
 
@@ -157,24 +158,30 @@ class StudentViewModel : ViewModel() {
         db.collection("users")
             .document(userId)
             .get()
-            .addOnSuccessListener { doc ->
+            .addOnSuccessListener { userDoc ->
 
-                if (doc.exists()) {
+                if (userDoc.exists()) {
 
-                    println("🔥 loadStudent called with ID: $userId")
+                    db.collection("students")
+                        .document(userId)   // 🔥 THIS IS THE FIX
+                        .get()
+                        .addOnSuccessListener { studentDoc ->
 
-                    studentData = StudentData(
-                        userId = userId,
-                        name = doc.getString("name") ?: "",
-                        role = doc.getString("role") ?: "",
-                        standard = doc.getString("standard") ?: ""
-                    )
+                            studentData = StudentData(
+                                userId = userId,
+                                name = userDoc.getString("name") ?: "",
+                                role = userDoc.getString("role") ?: "",
+                                standard = userDoc.getString("standard") ?: "",
+                                rollNo = studentDoc.getLong("rollNumber")?.toInt() ?: 0
+                            )
 
-                    onComplete()
+                            println("🔥 Student RollNo: ${studentData.rollNo}")
+
+                            onComplete()
+                        }
                 }
             }
     }
-
     // 🔥 Helper functions
 
     fun getName(): String {

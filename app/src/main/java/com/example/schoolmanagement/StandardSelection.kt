@@ -25,7 +25,7 @@ import androidx.compose.ui.unit.sp
 
 @Composable
 fun StandardSelectionPage(
-    onStandardSelected: (Int) -> Unit,
+    onStandardSelected: (String) -> Unit,
     padding: PaddingValues
 ) {
 
@@ -61,7 +61,7 @@ fun StandardSelectionPage(
                 StandardCard(
                     standard = standard,
                     color = colors[index % colors.size],
-                    onClick = { onStandardSelected(standard) }
+                    onClick = { onStandardSelected((standard).toString()) }
                 )
             }
 
@@ -73,7 +73,7 @@ fun StandardSelectionPage(
                 StandardCard(
                     standard = 10,
                     color = colors[9 % colors.size],
-                    onClick = { onStandardSelected(10) }
+                    onClick = { onStandardSelected((10).toString()) }
                 )
             }
 

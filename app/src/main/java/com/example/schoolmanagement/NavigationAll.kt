@@ -42,6 +42,7 @@ import java.util.Locale
 fun AppNavigation(navController: NavHostController) {
     val teacherViewModel: TeacherViewModel = viewModel()
     val studentViewModel: StudentViewModel = viewModel()
+    val feeViewModel: FeeViewModel = viewModel()
 
     val context = LocalContext.current
     val activity = context as Activity
@@ -160,7 +161,10 @@ fun AppNavigation(navController: NavHostController) {
 
                 QuarterSelectionPage(
                     padding = padding,
-                    onQuarterSelected = {
+                    onQuarterSelected = { quarter ->
+
+                        feeViewModel.setQuarter(quarter)   // ✅ STORE
+
                         navController.navigate("Standard Selection")
                     }
                 )
@@ -178,7 +182,10 @@ fun AppNavigation(navController: NavHostController) {
 
                 StandardSelectionPage(
                     padding = padding,
-                    onStandardSelected = {
+                    onStandardSelected = { standard ->
+
+                        feeViewModel.setStandard(standard)   // ✅ STORE (already String)
+
                         navController.navigate("Student Fee")
                     }
                 )
@@ -189,21 +196,15 @@ fun AppNavigation(navController: NavHostController) {
         // STUDENT FEES
         composable("Student Fee") {
 
-            var feePageChanged by remember { mutableStateOf(false) }
 
             FeeAdminScaffold(
                 navController = navController,
-                title = "Student List",
-                showSubmit = feePageChanged,
-                onSubmitClick = {
-                    // TODO: Save changes to database later
-                    feePageChanged = false
-                }
+                title = "Student List"
             ) { padding ->
 
                 StudentFeePage(
                     padding = padding,
-                    onChange = { feePageChanged = true }
+                    feeViewModel = feeViewModel
                 )
 
             }
