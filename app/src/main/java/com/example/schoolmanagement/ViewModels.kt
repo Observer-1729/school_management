@@ -271,6 +271,55 @@ class StudentViewModel : ViewModel() {
         return studentData.standard
     }
 
+    var notesList by mutableStateOf(listOf<PdfItem>())
+        private set
+
+    var homeworkList by mutableStateOf(listOf<PdfItem>())
+        private set
+
+    fun loadPdfs(subject: String, standard: String) {
+
+        FirebaseFirestore.getInstance()
+            .collection("pdfs")
+            .whereEqualTo("subject", subject)
+            .whereEqualTo("standard", standard)
+            .get()
+            .addOnSuccessListener { result ->
+                println("🔥 QUERY SUBJECT: '$subject'")
+                println("🔥 QUERY STANDARD: '$standard'")
+
+                val notes = mutableListOf<PdfItem>()
+                val homework = mutableListOf<PdfItem>()
+
+                for (doc in result) {
+                    println("🔥 FIRESTORE SUBJECT: '${doc.getString("subject")}'")
+                    println("🔥 FIRESTORE STANDARD: '${doc.getString("standard")}'")
+                    println("🔥 FIRESTORE TYPE: '${doc.getString("type")}'")
+
+                    val pdf = PdfItem(
+                        id = doc.id, // 🔥 IMPORTANT
+                        title = doc.getString("title") ?: "",
+                        pdfUrl = doc.getString("url") ?: "",
+                        subject = subject,
+                        standard = standard,
+                        type = doc.getString("type") ?: "",
+                        isUploading = false // 🔥 NO uploading for student
+                    )
+
+                    if (pdf.type == "notes") {
+                        notes.add(pdf)
+                    } else {
+                        homework.add(pdf)
+                    }
+                }
+
+                notesList = notes
+                homeworkList = homework
+            }
+
+
+    }
+
 }
 
 data class SubjectAssignment(

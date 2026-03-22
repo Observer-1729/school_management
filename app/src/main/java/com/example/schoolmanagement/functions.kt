@@ -58,6 +58,7 @@ fun uploadPdfToCloudinary(
 
     MediaManager.get().upload(fileUri)
         .unsigned("school_app_upload")
+        .option("resource_type", "raw")
         .callback(object : com.cloudinary.android.callback.UploadCallback {
 
             override fun onStart(requestId: String?) {

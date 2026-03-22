@@ -538,36 +538,47 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("student_dashboard") {backStackEntry->
             val name = backStackEntry.arguments?.getString("name") ?: ""
-            val standard = backStackEntry.arguments?.getString("standard") ?: ""
+//            val standard = backStackEntry.arguments?.getString("standard") ?: ""
+            val standard = studentViewModel.studentData.standard
 
             StudentDashboard(
                 studentViewModel = studentViewModel,
                 onSubjectClick = { subject ->
-                    navController.navigate("student_subject/${Uri.encode(subject)}")
+                    navController.navigate("student_subject/${Uri.encode(subject)}/$standard")
                 }
             )
         }
 
-        composable("student_subject/{subject}") { backStackEntry ->
+        composable("student_subject/{subject}/{standard}") { backStackEntry ->
 
             val subject = backStackEntry.arguments?.getString("subject") ?: ""
 
+            val studentViewModel: StudentViewModel = viewModel()
+
+            val standard = backStackEntry.arguments?.getString("standard") ?: ""
+
             var selectedTab by remember { mutableStateOf(0) }
 
-            // 🔥 PDF STATE
-            var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+            // 🔥 LOAD DATA
+            LaunchedEffect(subject) {
+                studentViewModel.loadPdfs(subject, standard)
+            }
+
+            val notes = studentViewModel.notesList
+            val homework = studentViewModel.homeworkList
+
+            var selectedPdfUrl by remember { mutableStateOf<String?>(null) }
             var selectedPdfTitle by remember { mutableStateOf("") }
 
-            val isPdfOpen = selectedPdfUri != null
+            val isPdfOpen = selectedPdfUrl != null
 
             StudentScaffold(
                 title = if (isPdfOpen) selectedPdfTitle else subject,
-
                 isPdfScreen = isPdfOpen,
 
                 onBackClick = {
                     if (isPdfOpen) {
-                        selectedPdfUri = null   // 🔥 close PDF
+                        selectedPdfUrl = null   // 🔥 instead of Uri
                     } else {
                         navController.popBackStack()
                     }
@@ -582,7 +593,6 @@ fun AppNavigation(navController: NavHostController) {
                         onClick = { selectedTab = 0 },
                         text = { Text("Notes") }
                     )
-
                     Tab(
                         selected = selectedTab == 1,
                         onClick = { selectedTab = 1 },
@@ -594,19 +604,18 @@ fun AppNavigation(navController: NavHostController) {
 
                 if (isPdfOpen) {
 
-                    PdfScreen(
-                        uri = selectedPdfUri!!
-                    )
+                    PdfScreen(url = selectedPdfUrl!!)
 
                 } else {
 
                     SubjectScreen(
                         modifier = Modifier.padding(padding),
                         selectedTab = selectedTab,
-
-                        onPdfOpen = { title, uri ->
+                        notes = notes,
+                        homework = homework,
+                        onPdfOpen = { title, url ->
                             selectedPdfTitle = title
-                            selectedPdfUri = uri
+                            selectedPdfUrl = url
                         }
                     )
                 }

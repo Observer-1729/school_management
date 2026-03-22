@@ -1,6 +1,5 @@
 package com.example.schoolmanagement.ui.theme
 
-import android.net.Uri
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -23,31 +22,34 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.schoolmanagement.PdfItem
 
 @Composable
 fun SubjectScreen(
     modifier: Modifier,
     selectedTab: Int,
-    onPdfOpen: (String, Uri) -> Unit   // 🔥 IMPORTANT
+    notes: List<PdfItem>,        // 🔥 ADD
+    homework: List<PdfItem>,     // 🔥 ADD
+    onPdfOpen: (String, String) -> Unit
 ) {
+
 
     Column(modifier = modifier) {
 
         if (selectedTab == 0) {
-            NotesSection(onPdfOpen)
+            NotesSection(notes, onPdfOpen)
         } else {
-            HomeworkSection(onPdfOpen)
+            HomeworkSection(homework, onPdfOpen)
         }
     }
 }
 
 @Composable
 fun NotesSection(
-    onPdfOpen: (String, Uri) -> Unit,
+    notes: List<PdfItem>,   // 🔥 REAL DATA
+    onPdfOpen: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val placeholderNotes = List(6) { "Notes PDF ${it + 1}" }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -58,16 +60,16 @@ fun NotesSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        items(placeholderNotes) { title ->
+        items(notes) { pdf ->   // 🔥 REAL LIST
 
             PdfCard(
-                title = title,
-                date = "DD MMM YYYY",
+                title = pdf.title,
+                date = "Notes",
                 onClick = {
-                    val uri = Uri.parse(
-                        "android.resource://com.example.schoolmanagement/raw/sample"
+                    onPdfOpen(
+                        pdf.title,
+                        pdf.pdfUrl   // 🔥 CLOUDINARY URL
                     )
-                    onPdfOpen(title, uri)   // 🔥 SEND EVENT UP
                 }
             )
         }
@@ -76,11 +78,10 @@ fun NotesSection(
 
 @Composable
 fun HomeworkSection(
-    onPdfOpen: (String, Uri) -> Unit,
+    homework: List<PdfItem>,
+    onPdfOpen: (String, String) -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val homework = List(6) { "Homework ${it + 1}" }
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
@@ -91,16 +92,16 @@ fun HomeworkSection(
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
 
-        items(homework) { title ->
+        items(homework) { pdf ->
 
             PdfCard(
-                title = title,
-                date = "DD MMM YYYY",
+                title = pdf.title,
+                date = "Homework",
                 onClick = {
-                    val uri = Uri.parse(
-                        "android.resource://com.example.schoolmanagement/raw/sample"
+                    onPdfOpen(
+                        pdf.title,
+                        pdf.pdfUrl
                     )
-                    onPdfOpen(title, uri)   // 🔥 SEND EVENT UP
                 }
             )
         }
