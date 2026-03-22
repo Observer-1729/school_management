@@ -133,6 +133,85 @@ class TeacherViewModel : ViewModel() {
     fun getLeaves(): Long {
         return teacherData.totalLeaves
     }
+
+    var selectedSubjectClass by mutableStateOf<SubjectClass?>(null)
+        private set
+
+    fun selectSubjectClass(subjectClass: SubjectClass) {
+        selectedSubjectClass = subjectClass
+    }
+    var notesList by mutableStateOf(listOf<PdfItem>())
+        private set
+
+    var homeworkList by mutableStateOf(listOf<PdfItem>())
+        private set
+
+    fun addPdf(pdf: PdfItem) {
+        if (pdf.type == "notes") {
+            notesList = notesList + pdf
+        } else {
+            homeworkList = homeworkList + pdf
+        }
+    }
+    fun updatePdf(id: String, url: String) {
+
+        val noteIndex = notesList.indexOfFirst { it.id == id }
+        if (noteIndex != -1) {
+            notesList = notesList.toMutableList().apply {
+                this[noteIndex] = this[noteIndex].copy(
+                    pdfUrl = url,
+                    isUploading = false
+                )
+            }
+            return
+        }
+
+        val hwIndex = homeworkList.indexOfFirst { it.id == id }
+        if (hwIndex != -1) {
+            homeworkList = homeworkList.toMutableList().apply {
+                this[hwIndex] = this[hwIndex].copy(
+                    pdfUrl = url,
+                    isUploading = false
+                )
+            }
+        }
+    }
+
+    fun loadPdfs(subject: String, standard: String) {
+
+        FirebaseFirestore.getInstance()
+            .collection("pdfs")
+            .whereEqualTo("subject", subject)
+            .whereEqualTo("standard", standard)
+            .get()
+            .addOnSuccessListener { result ->
+
+                val notes = mutableListOf<PdfItem>()
+                val homework = mutableListOf<PdfItem>()
+
+                for (doc in result) {
+
+                    val pdf = PdfItem(
+                        id = doc.getString("id") ?: "",
+                        title = doc.getString("title") ?: "",
+                        pdfUrl = doc.getString("url") ?: "",
+                        subject = doc.getString("subject") ?: "",
+                        standard = doc.getString("standard") ?: "",
+                        type = doc.getString("type") ?: "",
+                        isUploading = false
+                    )
+
+                    if (pdf.type == "notes") {
+                        notes.add(pdf)
+                    } else {
+                        homework.add(pdf)
+                    }
+                }
+
+                notesList = notes
+                homeworkList = homework
+            }
+    }
 }
 
 data class StudentData(

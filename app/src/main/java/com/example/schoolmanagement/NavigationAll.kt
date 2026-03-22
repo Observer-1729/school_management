@@ -17,6 +17,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -37,6 +38,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import java.util.UUID
 
 @Composable
 fun AppNavigation(navController: NavHostController) {
@@ -216,6 +218,9 @@ fun AppNavigation(navController: NavHostController) {
 
         composable("Subject Dashboard") { backStackEntry ->
             val teacher = teacherViewModel.teacherData
+            var selectedTab by remember { mutableStateOf(0) }
+            var selectedUri by remember { mutableStateOf<Uri?>(null) }
+            var showDialog by remember { mutableStateOf(false) }
 
             SubjectTeacherDashboard(
                 teacherName = teacher.name,
@@ -230,7 +235,10 @@ fun AppNavigation(navController: NavHostController) {
                         navController.navigate("Leave Form")
                     },
 
-                    onSubjectClick = {
+                    onSubjectClick = { subjectClass ->
+
+                        teacherViewModel.selectSubjectClass(subjectClass)
+
                         navController.navigate("HW and Notes")
                     }
                 )
@@ -257,30 +265,76 @@ fun AppNavigation(navController: NavHostController) {
 
             var selectedTab by remember { mutableStateOf(0) }
 
+            val selected = teacherViewModel.selectedSubjectClass
+
             val context = LocalContext.current
+
+            var selectedPdfUri by remember { mutableStateOf<Uri?>(null) }
+            var selectedFileName by remember { mutableStateOf("") }
+
+            val notesList = teacherViewModel.notesList
+            val homeworkList = teacherViewModel.homeworkList
+
+            var lastPickedUri by remember { mutableStateOf<Uri?>(null) }
+
 
             val pdfPicker = rememberLauncherForActivityResult(
                 contract = ActivityResultContracts.GetContent()
             ) { uri ->
 
-                if (uri != null) {
-                    Toast.makeText(context, "PDF Selected", Toast.LENGTH_SHORT).show()
-                }
+                if (uri != null && uri != lastPickedUri) {
 
+                    lastPickedUri = uri   // 🔥 prevents duplicate trigger
+
+                    val fileName = getFileName(context, uri)
+
+                    val newPdf = PdfItem(
+                        id = UUID.randomUUID().toString(),
+                        title = fileName,
+                        pdfUrl = "",
+                        subject = selected?.subject ?: "",
+                        standard = selected?.className ?: "",
+                        type = if (selectedTab == 0) "notes" else "homework",
+                        isUploading = true
+                    )
+
+                    teacherViewModel.addPdf(newPdf)
+
+                    uploadPdfToCloudinary(uri, newPdf) { url ->
+//                        teacherViewModel.updatePdf(newPdf.id, url)
+//
+//                        Toast.makeText(context, "Uploaded successfully", Toast.LENGTH_SHORT).show()
+
+                        if (url.isNotEmpty()) {
+                            teacherViewModel.updatePdf(newPdf.id, url)
+                            Toast.makeText(context, "Uploaded successfully", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "Upload failed", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+//
+//                    if (selectedTab == 0) {
+//                        teacherViewModel.addPdf(newPdf)
+//                    } else {
+//                        teacherViewModel.addPdf(newPdf)
+//                    }
+                }
             }
 
             SubjectTeacherDashboard(
-                teacherName = "Add Notes / Homework",
+                teacherName = selected?.let {
+                    "${it.subject} - ${it.className}"
+                } ?: "Add Notes / Homework",
+
                 onBackClick = { navController.popBackStack() },
 
                 tabs = {
-
                     TabRow(
                         selectedTabIndex = selectedTab,
                         containerColor = Color(0xFF1976D2),
                         contentColor = Color.White
                     ) {
-
                         Tab(
                             selected = selectedTab == 0,
                             onClick = { selectedTab = 0 },
@@ -292,23 +346,16 @@ fun AppNavigation(navController: NavHostController) {
                             onClick = { selectedTab = 1 },
                             text = { Text("Homework") }
                         )
-
                     }
-
                 },
 
                 floatingActionButton = {
-
                     ExtendedFloatingActionButton(
-
                         onClick = {
                             pdfPicker.launch("application/pdf")
                         },
-
                         containerColor = Color(0xFF1976D2)
-
                     ) {
-
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = null,
@@ -321,25 +368,28 @@ fun AppNavigation(navController: NavHostController) {
                             if (selectedTab == 0) "Upload Note" else "Upload Homework",
                             color = Color.White
                         )
-
                     }
-
                 }
 
             ) { modifier ->
+                LaunchedEffect(selected) {
+                    selected?.let {
+                        teacherViewModel.loadPdfs(
+                            subject = it.subject,
+                            standard = it.className.replace("Class ", "")
+                        )
+                    }
+                }
 
                 Column(modifier = modifier) {
 
-                    when (selectedTab) {
-
-                        0 -> NotesContent()
-
-                        1 -> HomeworkContent()
-
-                    }
+                    TeacherMaterialScreen(
+                        selectedTab = selectedTab,
+                        notes = notesList,
+                        homework = homeworkList
+                    )
 
                 }
-
             }
 
         }
