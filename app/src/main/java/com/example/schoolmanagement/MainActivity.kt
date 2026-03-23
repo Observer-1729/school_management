@@ -19,30 +19,9 @@ class MainActivity : ComponentActivity() {
                 val pd = PaddingValues()
                 initCloudinary(this)
 
-                val dummyResults = listOf(
-                    "PA1" to 72.5f,
-                    "PA2" to 81.0f,
-                    "PA3" to 76.3f
-                )
 
-
-
-
-//                LoginScreen()
-//                WelcomePage()
-////               SelectionTeacher()
-//                StudentDashboard(
-//                    studentName = "Sahil",
-//                    attendancePercentage = 88,
-//                    subjects = subjects,
-//                    feeDue = true,
-//                    onSubjectClick = { subject ->
-//                        // Navigation later
-//                    }
-//                )
-//                AttendanceScreen()
               AppNavigation(navController = navController)
-//                ResultHistoryScreen(Modifier, dummyResults)
+
 
 
 

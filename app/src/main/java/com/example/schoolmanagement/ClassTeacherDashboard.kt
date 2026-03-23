@@ -4,6 +4,7 @@ import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -15,6 +16,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -22,6 +24,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.HowToReg
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,8 +34,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,40 +68,57 @@ fun ClassTeacherScaffold(
     Scaffold(
 
         topBar = {
+            Column {
 
-            TopAppBar(
+                // 🔹 Status bar area
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary)
+                        .statusBarsPadding()
+                )
 
-                title = { Text(title) },
+                // 🔹 Main App Bar
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.primary) // ✅ FIXED
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
 
-                navigationIcon = {
-                    IconButton(onClick = onBackClick) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+                    // 🔹 LEFT SIDE
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+
+                        IconButton(onClick = onBackClick) {
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back",
+                                tint = MaterialTheme.colorScheme.onPrimary // ✅ FIXED
+                            )
+                        }
+
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleLarge,
+                            color = MaterialTheme.colorScheme.onPrimary // ✅ FIXED
                         )
                     }
-                },
 
-                actions = {
+                    // 🔹 RIGHT SIDE
                     if (actionText != null && onActionClick != null) {
                         Text(
                             text = actionText,
-                            modifier = Modifier
-                                .padding(end = 12.dp)
-                                .clickable { onActionClick() },
-                            color = Color.White,
-                            fontWeight = FontWeight.SemiBold
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onPrimary, // ✅ FIXED
+                            modifier = Modifier.clickable {
+                                onActionClick()
+                            }
                         )
                     }
-                },
-
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    titleContentColor = Color.White,
-                    navigationIconContentColor = Color.White
-                )
-
-            )
+                }
+            }
         }
 
     ) { paddingValues ->
@@ -223,9 +241,9 @@ fun ClassTeacherDashboardContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         Text(
-            text = "EXAMS",
-            fontSize = 18.sp,
-            fontWeight = FontWeight.SemiBold
+            text = "Exams",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onSurface
         )
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -312,8 +330,7 @@ fun TimeTableCard(
 
                         Text(
                             text = "Upload Time Table",
-                            fontWeight = FontWeight.Medium,
-                            fontSize = 17.sp
+                            style = MaterialTheme.typography.titleLarge
                         )
                     }
                 }
@@ -332,6 +349,9 @@ fun AttendanceCard(onClick: () -> Unit) {
             .fillMaxWidth()
             .height(90.dp)
             .clickable { onClick() },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         elevation = CardDefaults.cardElevation(8.dp),
         shape = RoundedCornerShape(16.dp)
     ) {
@@ -353,8 +373,7 @@ fun AttendanceCard(onClick: () -> Unit) {
 
             Text(
                 text = "Take Attendance",
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Medium
+                style = MaterialTheme.typography.titleMedium
             )
         }
     }
@@ -372,8 +391,8 @@ fun ExamGrid(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            ExamCard("PA1") { onMarksClick("PA1") }
-            ExamCard("PA2") { onMarksClick("PA2") }
+            ExamCard("PA-1") { onMarksClick("PA1") }
+            ExamCard("PA-2") { onMarksClick("PA2") }
 
         }
 
@@ -384,8 +403,8 @@ fun ExamGrid(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
 
-            ExamCard("PA3") { onMarksClick("PA3") }
-            ExamCard("PA4") { onMarksClick("PA4") }
+            ExamCard("PA-3") { onMarksClick("PA3") }
+            ExamCard("PA-4") { onMarksClick("PA4") }
 
         }
 
@@ -399,6 +418,7 @@ fun ExamCard(
     onMarksClick: () -> Unit
 ) {
 
+
     Card(
         modifier = Modifier
             .width(160.dp)
@@ -406,6 +426,10 @@ fun ExamCard(
             .clickable {
                 onMarksClick()
             },
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
 
@@ -414,11 +438,19 @@ fun ExamCard(
             contentAlignment = Alignment.Center
         ) {
 
-            Text(
-                text = examName,
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold
-            )
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = examName,
+                    style = MaterialTheme.typography.titleLarge
+                )
+
+                Text(
+                    text = "Enter Marks",
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
 
         }
 
@@ -483,6 +515,9 @@ fun LeaveCard(
             .fillMaxWidth()
             .height(100.dp),
         shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant // soft blue
+        ),
         elevation = CardDefaults.cardElevation(6.dp)
     ) {
 
@@ -498,23 +533,28 @@ fun LeaveCard(
 
                 Text(
                     text = "Leaves Left",
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    style = MaterialTheme.typography.bodyMedium
                 )
-
-                Spacer(modifier = Modifier.height(6.dp))
 
                 Text(
                     text = "$leavesLeft",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold
+                    style = MaterialTheme.typography.headlineLarge
                 )
             }
 
             Button(
-                onClick = onApplyLeaveClick
+                onClick = onApplyLeaveClick,
+                shape = RoundedCornerShape(12.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF6C63FF), // primary purple
+                    contentColor = Color.White
+                ),
+                elevation = ButtonDefaults.buttonElevation(4.dp)
             ) {
-                Text("Apply Leave")
+                Text(
+                    text = "Apply",
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
         }

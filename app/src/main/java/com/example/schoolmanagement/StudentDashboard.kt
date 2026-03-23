@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -31,7 +32,6 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Divider
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -51,18 +51,25 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.schoolmanagement.ui.theme.CardGlass
+import com.example.schoolmanagement.ui.theme.DarkPurple
+import com.example.schoolmanagement.ui.theme.LightPurple
+import com.example.schoolmanagement.ui.theme.PrimaryPurple
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlin.math.cos
 import kotlin.math.sin
@@ -188,15 +195,25 @@ fun StudentDashboard(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = studentName,
-                        fontWeight = FontWeight.Bold,
-                        color = Color.White
-                    )
-                },
-                navigationIcon = {
+            Column {
+
+                // 🔹 DARK PURPLE (Status Bar Area)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(DarkPurple) // Dark Purple
+                        .statusBarsPadding() // 🔥 IMPORTANT
+                )
+
+                // 🔹 LIGHT PURPLE (App Bar)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(PrimaryPurple) // Your existing purple
+                        .padding(horizontal = 16.dp, vertical = 14.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
                     IconButton(onClick = { showExitDialog = true }) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -204,11 +221,15 @@ fun StudentDashboard(
                             tint = Color.White
                         )
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color(0xFFB17BF4)
-                )
-            )
+
+                    Text(
+                        text = studentName,
+                        color = Color.White,
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold
+                    )
+                }
+            }
         }
     ) { paddingValues ->
 
@@ -335,6 +356,13 @@ fun StudentDashboard(
                         }
                 }
 
+                Text(
+                    text = "Timetable",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
                 // 🕒 Timetable Section
                 Card(
                     modifier = Modifier
@@ -353,7 +381,10 @@ fun StudentDashboard(
                             AsyncImage(
                                 model = timetableUrl,
                                 contentDescription = "Timetable",
-                                modifier = Modifier.fillMaxSize()
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .clip(RoundedCornerShape(16.dp)),
+                                contentScale = ContentScale.Crop
                             )
 
                         } else {
@@ -363,6 +394,13 @@ fun StudentDashboard(
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
+
+                Text(
+                    text = "Performance",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(vertical = 8.dp)
+                )
 
                 // 📊 Two Side-by-Side Boxes
                 Row(
@@ -374,9 +412,13 @@ fun StudentDashboard(
                         modifier = Modifier
                             .weight(1f)
                             .height(150.dp)
-                            .clickable {
-                                onSpeedoMeterClick()   // 🔥 NAVIGATION
-                            },) {
+                            .clickable { onSpeedoMeterClick() },
+                        shape = RoundedCornerShape(20.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = LightPurple // 🔥 soft background
+                        ),
+                        elevation = CardDefaults.cardElevation(6.dp)
+                    ) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier.fillMaxSize()
@@ -430,9 +472,9 @@ fun StudentDashboard(
 fun AttendanceBox(attendancePercentage: Int) {
 
     val backgroundColor = when {
-        attendancePercentage < 80 -> Color(0xFFE57373) // Red
-        attendancePercentage < 90 -> Color(0xFFFFF176) // Yellow
-        else -> Color(0xFF81C784) // Green
+        attendancePercentage < 80 -> Color(0xFFFFCDD2) // soft red
+        attendancePercentage < 90 -> Color(0xFFFFF9C4) // soft yellow
+        else -> Color(0xFFC8E6C9) // soft green
     }
 
     Card(
@@ -442,19 +484,30 @@ fun AttendanceBox(attendancePercentage: Int) {
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = backgroundColor)
     ) {
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier.fillMaxSize()
+
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(12.dp),
+            verticalArrangement = Arrangement.SpaceBetween,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
+            // 🔹 Heading
+            Text(
+                text = "Attendance",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            // 🔹 Percentage
             Text(
                 text = "$attendancePercentage%",
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineLarge
             )
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }
-
 @Composable
 fun SubjectCard(
     subjectName: String,
@@ -466,44 +519,53 @@ fun SubjectCard(
     Card(
         onClick = onClick,
         modifier = Modifier.size(130.dp),
-        shape = RoundedCornerShape(16.dp),
-        elevation = CardDefaults.cardElevation(6.dp)
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = CardGlass // 🔥 translucent
+        ),
+        elevation = CardDefaults.cardElevation(8.dp)
     ) {
 
         Column(
             modifier = Modifier.fillMaxSize()
         ) {
-
-            // ICON AREA (takes most space)
             Box(
                 modifier = Modifier
-                    .weight(0.75f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
+                    .fillMaxSize()
+                    .clip(RoundedCornerShape(20.dp))
             ) {
+
+                // 🔹 Image fills everything
                 Image(
                     painter = painterResource(id = icon),
                     contentDescription = subjectName,
-                    modifier = Modifier.size(100.dp)   // Bigger icon
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop
                 )
-            }
 
-            Divider(
-                thickness = 1.dp,
-                color = Color.LightGray
-            )
+                // 🔹 Gradient overlay (VERY IMPORTANT)
+                Box(
+                    modifier = Modifier
+                        .matchParentSize()
+                        .background(
+                            Brush.verticalGradient(
+                                colors = listOf(
+                                    Color.Transparent,
+                                    Color.Black.copy(alpha = 0.5f)
+                                )
+                            )
+                        )
+                )
 
-            // TEXT AREA (small space)
-            Box(
-                modifier = Modifier
-                    .weight(0.25f)
-                    .fillMaxWidth(),
-                contentAlignment = Alignment.Center
-            ) {
+                // 🔹 Text on image (clean)
                 Text(
                     text = subjectName,
-                    fontSize = 13.sp,
-                    fontWeight = FontWeight.Medium
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .padding(8.dp)
                 )
             }
         }

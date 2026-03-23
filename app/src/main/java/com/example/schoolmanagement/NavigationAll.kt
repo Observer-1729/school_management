@@ -255,7 +255,7 @@ fun AppNavigation(navController: NavHostController) {
                 onBackClick = { navController.popBackStack() }
             ) { modifier ->
 
-                ApplyLeaveForm(teacherViewModel = teacherViewModel)
+                ApplyLeaveForm(teacherViewModel = teacherViewModel,modifier = modifier)
 
             }
 
@@ -472,30 +472,6 @@ fun AppNavigation(navController: NavHostController) {
             }
         }
 
-//        composable("Subject selection/{examName}") { backStackEntry ->
-//
-//            val examName = backStackEntry.arguments?.getString("examName") ?: "PA1"
-//            val teacher = teacherViewModel.teacherData
-//            val standard = teacher.classTeacherOf ?: ""
-//            val subjects = listOf("Maths","Science","English","Hindi")
-//
-//            ClassTeacherScaffold(
-//                title = "Select Subject",
-//                standard = standard,
-//                onBackClick = { navController.popBackStack() }
-//            ) { modifier ->
-//
-//                SubjectSelectionScreen(
-//                    modifier = modifier,   // ✅ ADD THIS
-//                    examName = examName,
-//                    subjects = subjects,
-//                    onSubjectClick = { subject ->
-//                        navController.navigate("Marks Entry/$examName/$subject/$standard")
-//                    }
-//                )
-//
-//            }
-//        }
 
         composable("marksScreen/{exam}") { backStackEntry ->
 

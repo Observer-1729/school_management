@@ -12,9 +12,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -54,6 +56,7 @@ fun LoginScreen(
             .background(MaterialTheme.colorScheme.background)
     ) {
 
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -63,123 +66,155 @@ fun LoginScreen(
         ) {
 
             Text(
-                "Login Page",
-                modifier = Modifier.padding(16.dp),
-                fontSize = 24.sp,
+                text = "Welcome Back",
+                fontSize = 26.sp,
                 fontWeight = FontWeight.Bold,
-                fontFamily = androidx.compose.ui.text.font.FontFamily.Cursive,
-                color = MaterialTheme.colorScheme.onBackground
+                color = Color(0xFF4A3AFF)
             )
 
-            Spacer(modifier = Modifier.height(60.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Text(
-                text = "Employee ID / Student ID",
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp),
-                color = MaterialTheme.colorScheme.onBackground
+                text = "Login to continue",
+                color = Color.Gray,
+                fontSize = 14.sp
             )
 
-            OutlinedTextField(
-                value = id,
-                onValueChange = { id = it },
-                label = { Text("ID") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                singleLine = true
-            )
+            Spacer(modifier = Modifier.height(24.dp))
 
-            Text(
-                "Password",
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.padding(start = 20.dp, top = 20.dp)
-            )
+            // 🔹 CARD STARTS HERE
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp),
+                elevation = CardDefaults.cardElevation(8.dp)
+            ) {
 
-            OutlinedTextField(
-                value = password,
-                onValueChange = { password = it },
-                label = { Text("Password") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                visualTransformation = PasswordVisualTransformation(),
-                singleLine = true
-            )
+                Column(
+                    modifier = Modifier.padding(16.dp)
+                ) {
 
-            Button(
-                onClick = {
+                    Text(
+                        text = "ID",
+                        fontWeight = FontWeight.Medium
+                    )
 
-                    if (id.isEmpty() || password.isEmpty()) {
-                        Toast.makeText(context, "Enter all fields", Toast.LENGTH_SHORT).show()
-                        return@Button
-                    }
+                    OutlinedTextField(
+                        value = id,
+                        onValueChange = { id = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true
+                    )
 
-                    val email = id.lowercase() + "@school.com"
+                    Spacer(modifier = Modifier.height(12.dp))
 
-                    db.collection("users")
-                        .document(id) // ✅ DIRECT lookup (FAST + CORRECT)
-                        .get()
-                        .addOnSuccessListener { document ->
+                    Text(
+                        text = "Password",
+                        fontWeight = FontWeight.Medium
+                    )
 
-                            if (document.exists()) {
+                    OutlinedTextField(
+                        value = password,
+                        onValueChange = { password = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        visualTransformation = PasswordVisualTransformation(),
+                        singleLine = true
+                    )
 
-                                val name = document.getString("name") ?: "User"
-                                val role = document.getString("role")
-                                val standard = document.getString("standard") ?: ""
+                    Spacer(modifier = Modifier.height(20.dp))
+
+                    Button(
+                        onClick = {
+                            if (id.isEmpty() || password.isEmpty()) {
+                                Toast.makeText(context, "Enter all fields", Toast.LENGTH_SHORT)
+                                    .show()
+                                return@Button
+                            }
+
+                            val email = id.lowercase() + "@school.com"
+
+                            db.collection("users")
+                                .document(id) // ✅ DIRECT lookup (FAST + CORRECT)
+                                .get()
+                                .addOnSuccessListener { document ->
+
+                                    if (document.exists()) {
+
+                                        val name = document.getString("name") ?: "User"
+                                        val role = document.getString("role")
+                                        val standard = document.getString("standard") ?: ""
 
 
 //                                onNavigate(name, role, teacherRoles, standard)
 
-                                if (role == null) {
-                                    Toast.makeText(context, "Role missing", Toast.LENGTH_SHORT).show()
-                                    return@addOnSuccessListener
+                                        if (role == null) {
+                                            Toast.makeText(
+                                                context,
+                                                "Role missing",
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                            return@addOnSuccessListener
+                                        }
+
+                                        val teacherRoles =
+                                            document.get("teacherRoles") as? List<String>
+                                                ?: emptyList()
+
+                                        auth.signInWithEmailAndPassword(email, password)
+                                            .addOnSuccessListener {
+
+                                                Toast.makeText(
+                                                    context,
+                                                    "Login Successful",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+
+                                                // ✅ SAME NAVIGATION LOGIC (UNCHANGED)
+                                                if (role == "teacher") {
+                                                    teacherViewModel.loadTeacher(id) {
+                                                        println("✅ Teacher stored in ViewModel")
+                                                        onNavigate()
+                                                    }
+                                                }
+
+                                                if (role == "student") {
+                                                    studentViewModel.loadStudent(id) {
+                                                        println("✅ Student stored in ViewModel")
+                                                        onNavigate()
+                                                    }
+                                                }
+                                            }
+                                            .addOnFailureListener {
+                                                Toast.makeText(
+                                                    context,
+                                                    "Wrong credentials",
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            "User not found",
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+
                                 }
-
-                                val teacherRoles =
-                                    document.get("teacherRoles") as? List<String> ?: emptyList()
-
-                                auth.signInWithEmailAndPassword(email, password)
-                                    .addOnSuccessListener {
-
-                                        Toast.makeText(context, "Login Successful", Toast.LENGTH_SHORT).show()
-
-                                        // ✅ SAME NAVIGATION LOGIC (UNCHANGED)
-                                        if (role == "teacher") {
-                                            teacherViewModel.loadTeacher(id) {
-                                                println("✅ Teacher stored in ViewModel")
-                                                onNavigate()
-                                            }
-                                        }
-
-                                        if (role == "student") {
-                                            studentViewModel.loadStudent(id) {
-                                                println("✅ Student stored in ViewModel")
-                                                onNavigate()
-                                            }
-                                        }
-                                    }
-                                    .addOnFailureListener {
-                                        Toast.makeText(context, "Wrong credentials", Toast.LENGTH_SHORT).show()
-                                    }
-
-                            } else {
-                                Toast.makeText(context, "User not found", Toast.LENGTH_SHORT).show()
-                            }
-
-                        }
-                        .addOnFailureListener {
-                            Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
-                        }
-                },
-                modifier = Modifier
-                    .wrapContentSize()
-                    .padding(16.dp)
-                    .height(50.dp),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFB17BF4)
-                )
-            ) {
-                Text("Login")
+                                .addOnFailureListener {
+                                    Toast.makeText(context, it.message, Toast.LENGTH_SHORT).show()
+                                }
+                        },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF6C63FF)
+                        )
+                    ) {
+                        Text("Login")
+                    }
+                }
             }
         }
     }
