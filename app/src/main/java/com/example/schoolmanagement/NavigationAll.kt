@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -32,6 +33,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.schoolmanagement.ui.theme.AttendanceScreen
+import com.example.schoolmanagement.ui.theme.ResultStudent
 import com.example.schoolmanagement.ui.theme.Student
 import com.example.schoolmanagement.ui.theme.SubjectScreen
 import com.google.firebase.firestore.FirebaseFirestore
@@ -418,7 +420,7 @@ fun AppNavigation(navController: NavHostController) {
                     },
 
                     onMarksClick = { exam ->
-                        navController.navigate("Subject selection/$exam")
+                        navController.navigate("marksScreen/$exam")
                     }
                 )
 
@@ -470,56 +472,104 @@ fun AppNavigation(navController: NavHostController) {
             }
         }
 
-        composable("Subject selection/{examName}") { backStackEntry ->
+//        composable("Subject selection/{examName}") { backStackEntry ->
+//
+//            val examName = backStackEntry.arguments?.getString("examName") ?: "PA1"
+//            val teacher = teacherViewModel.teacherData
+//            val standard = teacher.classTeacherOf ?: ""
+//            val subjects = listOf("Maths","Science","English","Hindi")
+//
+//            ClassTeacherScaffold(
+//                title = "Select Subject",
+//                standard = standard,
+//                onBackClick = { navController.popBackStack() }
+//            ) { modifier ->
+//
+//                SubjectSelectionScreen(
+//                    modifier = modifier,   // ✅ ADD THIS
+//                    examName = examName,
+//                    subjects = subjects,
+//                    onSubjectClick = { subject ->
+//                        navController.navigate("Marks Entry/$examName/$subject/$standard")
+//                    }
+//                )
+//
+//            }
+//        }
 
-            val examName = backStackEntry.arguments?.getString("examName") ?: "PA1"
-            val teacher = teacherViewModel.teacherData
-            val standard = teacher.classTeacherOf ?: ""
-            val subjects = listOf("Maths","Science","English","Hindi")
-
-            ClassTeacherScaffold(
-                title = "Select Subject",
-                standard = standard,
-                onBackClick = { navController.popBackStack() }
-            ) { modifier ->
-
-                SubjectSelectionScreen(
-                    modifier = modifier,   // ✅ ADD THIS
-                    examName = examName,
-                    subjects = subjects,
-                    onSubjectClick = { subject ->
-                        navController.navigate("Marks Entry/$examName/$subject/$standard")
-                    }
-                )
-
-            }
-        }
-
-        composable("Marks Entry/{exam}/{subject}") { backStackEntry ->
+        composable("marksScreen/{exam}") { backStackEntry ->
 
             val context = LocalContext.current
             val teacher = teacherViewModel.teacherData
             val standard = teacher.classTeacherOf ?: ""
 
             val exam = backStackEntry.arguments?.getString("exam") ?: ""
-            val subject = backStackEntry.arguments?.getString("subject") ?: ""
 
-            val students = listOf(
-                Student(1,"Rahul"),
-                Student(2,"Priya")
-            )
+            val marks = remember { mutableStateMapOf<Int, String>() }
+
+            val studentsState = remember { mutableStateListOf<ResultStudent>() }
+
+            LaunchedEffect(standard) {
+
+                val db = FirebaseFirestore.getInstance()
+
+                db.collection("students")
+                    .whereEqualTo("standard", standard)
+                    .get()
+                    .addOnSuccessListener { result ->
+
+                        studentsState.clear()
+
+                        for (doc in result.documents) {
+
+                            val student = ResultStudent(
+                                studentId = doc.id,   // 🔥 IMPORTANT
+                                rollNo = doc.getLong("rollNumber")?.toInt() ?: 0,
+                                name = doc.getString("name") ?: ""
+                            )
+
+                            studentsState.add(student)
+                        }
+
+                        println("✅ Students Loaded: ${studentsState.size}")
+                    }
+                    .addOnFailureListener {
+                        println("❌ Error fetching students: ${it.message}")
+                    }
+            }
 
             ClassTeacherScaffold(
-                title = "$subject - $exam",   // 🔥 Better title
+                title = exam,   // 🔥 Better title
                 onBackClick = { navController.popBackStack() },
                 standard = standard,
 
 
                 actionText = "Save",   // ✅ NEW
                 onActionClick = {
+
+                    val db = FirebaseFirestore.getInstance()
+
+                    for (student in studentsState) {
+
+                        val percentage = marks[student.rollNo]?.toFloatOrNull()
+
+                        if (percentage != null) {
+
+                            db.collection("results")
+                                .document(student.studentId)   // ✅ now valid
+                                .collection("exams")
+                                .document(exam)
+                                .set(
+                                    mapOf(
+                                        "percentage" to percentage
+                                    )
+                                )
+                        }
+                    }
+
                     Toast.makeText(
                         context,
-                        "Marks updated successfully",
+                        "Results saved successfully",
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -528,9 +578,9 @@ fun AppNavigation(navController: NavHostController) {
 
                 MarksEntryScreen(
                     modifier = modifier,
-                    subject = subject,
                     exam = exam,
-                    students = students
+                    students = studentsState,
+                    marks = marks
                 )
 
             }
@@ -545,6 +595,9 @@ fun AppNavigation(navController: NavHostController) {
                 studentViewModel = studentViewModel,
                 onSubjectClick = { subject ->
                     navController.navigate("student_subject/${Uri.encode(subject)}/$standard")
+                },
+                onSpeedoMeterClick ={
+                    navController.navigate("resultHistory")
                 }
             )
         }
@@ -619,6 +672,50 @@ fun AppNavigation(navController: NavHostController) {
                         }
                     )
                 }
+            }
+        }
+        composable("resultHistory") {
+
+            val student = studentViewModel.studentData
+            val studentId = student.userId
+
+            var results by remember { mutableStateOf<List<Pair<String, Float>>>(emptyList()) }
+
+            LaunchedEffect(Unit) {
+
+                FirebaseFirestore.getInstance()
+                    .collection("results")
+                    .document(studentId)
+                    .collection("exams")
+                    .get()
+                    .addOnSuccessListener { result ->
+
+                        val tempList = mutableListOf<Pair<String, Float>>()
+
+                        for (doc in result.documents) {
+
+                            val exam = doc.id
+                            val percentage = doc.getDouble("percentage")?.toFloat() ?: 0f
+
+                            tempList.add(exam to percentage)
+                        }
+
+                        // 🔥 Sort by PA number (PA1, PA2…)
+                        results = tempList.sortedBy {
+                            it.first.removePrefix("PA").toIntOrNull() ?: 0
+                        }
+                    }
+            }
+
+            StudentScaffold(
+                title = "Exam Results",
+                onBackClick = { navController.popBackStack() }
+            ) { padding ->
+
+                ResultHistoryScreen(
+                    modifier = Modifier.padding(padding),
+                    results = results
+                )
             }
         }
     }

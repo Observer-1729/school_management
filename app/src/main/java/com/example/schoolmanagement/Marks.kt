@@ -16,8 +16,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateMapOf
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -25,20 +23,18 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.schoolmanagement.ui.theme.Student
+import com.example.schoolmanagement.ui.theme.ResultStudent
 
 
 @Composable
 fun MarksEntryScreen(
     modifier: Modifier,
-    subject: String,
     exam: String,
-    students: List<com.example.schoolmanagement.ui.theme.Student>
+    students: List<ResultStudent>,
+    marks: MutableMap<Int, String>   // 🔥 ADD THIS
 ) {
 
-    val marks = remember {
-        mutableStateMapOf<Int, String>()
-    }
+
 
     Column(
         modifier = modifier
@@ -69,22 +65,25 @@ fun MarksEntryScreen(
 
 @Composable
 fun StudentMarksCard(
-    student: Student,
+    student: ResultStudent,
     marks: MutableMap<Int, String>
 ) {
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 6.dp),
-        shape = RoundedCornerShape(14.dp),
-        elevation = CardDefaults.cardElevation(4.dp)
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(20.dp),   // 🔥 smoother
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFF5F3FF) // 🔥 light purple translucent vibe
+        ),
+        elevation = CardDefaults.cardElevation(6.dp)
     ) {
 
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp),
+                .padding(horizontal = 16.dp, vertical = 18.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
 
@@ -103,35 +102,44 @@ fun StudentMarksCard(
                 Text(
                     text = student.name,
                     fontSize = 18.sp,
-                    fontWeight = FontWeight.Medium
+                    fontWeight = FontWeight.SemiBold
                 )
-
             }
 
+            // 🔥 NEW INPUT STYLE
             OutlinedTextField(
                 value = marks[student.rollNo] ?: "",
                 onValueChange = { value ->
 
-                    if (value.all { it.isDigit() }) {
+                    if (value.matches(Regex("^\\d*\\.?\\d*\$"))) {
 
-                        val num = value.toIntOrNull()
+                        val num = value.toFloatOrNull()
 
-                        if (num == null || num <= 100) {
+                        if (num == null || (num in 0f..100f)) {
                             marks[student.rollNo] = value
                         }
-
                     }
-
                 },
                 modifier = Modifier.width(90.dp),
                 singleLine = true,
-                keyboardOptions = KeyboardOptions(
-                    keyboardType = KeyboardType.Number
+                textStyle = androidx.compose.ui.text.TextStyle(
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
                 ),
-                label = { Text("Marks") }
+                keyboardOptions = KeyboardOptions(
+                    keyboardType = KeyboardType.Decimal
+                ),
+                placeholder = { Text("%") },
+                shape = RoundedCornerShape(12.dp),
+
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Color(0xFF7B61FF),
+                    unfocusedBorderColor = Color.LightGray,
+                    cursorColor = Color(0xFF7B61FF),
+                    focusedContainerColor = Color.White,
+                    unfocusedContainerColor = Color.White
+                )
             )
-
         }
-
     }
 }

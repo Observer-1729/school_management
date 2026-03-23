@@ -8,6 +8,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -129,7 +130,8 @@ fun StudentScaffold(
 @Composable
 fun StudentDashboard(
     studentViewModel: StudentViewModel,
-    onSubjectClick: (String) -> Unit
+    onSubjectClick: (String) -> Unit,
+    onSpeedoMeterClick: () -> Unit
 ) {
 
 
@@ -144,12 +146,40 @@ fun StudentDashboard(
     val studentName = student.name
     val standard = student.standard
 
+    var latestPercentage by remember { mutableStateOf(0f) }
+    var isLoadingResult by remember { mutableStateOf(true) }
+
 
     LaunchedEffect(Unit) {
         attendanceViewModel.loadAttendance(
             standard = standard,
             rollNo = student.rollNo
         )
+    }
+    LaunchedEffect(Unit) {
+
+        val db = FirebaseFirestore.getInstance()
+        val studentId = student.userId   // 🔥 IMPORTANT
+
+        db.collection("results")
+            .document(studentId)
+            .collection("exams")
+            .get()
+            .addOnSuccessListener { result ->
+
+                if (!result.isEmpty) {
+
+                    // 🔥 Find latest exam (PA1, PA2, PA3…)
+                    val latestDoc = result.documents.maxByOrNull { doc ->
+                        doc.id.removePrefix("PA").toIntOrNull() ?: 0
+                    }
+
+                    latestPercentage =
+                        latestDoc?.getDouble("percentage")?.toFloat() ?: 0f
+                }
+
+                isLoadingResult = false
+            }
     }
 
     var showExitDialog by remember { mutableStateOf(false) }
@@ -309,7 +339,7 @@ fun StudentDashboard(
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(300.dp),
+                        .height(190.dp),
                     shape = RoundedCornerShape(16.dp)
                 ) {
                     Box(
@@ -343,19 +373,19 @@ fun StudentDashboard(
                     Card(
                         modifier = Modifier
                             .weight(1f)
-                            .height(150.dp),
-                        shape = RoundedCornerShape(16.dp)
-                    ) {
+                            .height(150.dp)
+                            .clickable {
+                                onSpeedoMeterClick()   // 🔥 NAVIGATION
+                            },) {
                         Box(
                             contentAlignment = Alignment.Center,
                             modifier = Modifier.fillMaxSize()
                         ) {
-                            Speedometer(
-                                score = 98.2f,
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .padding(16.dp)
-                            )
+                            if (isLoadingResult) {
+                                Speedometer(score = 0f)
+                            } else {
+                                Speedometer(score = latestPercentage)
+                            }
                         }
                     }
 

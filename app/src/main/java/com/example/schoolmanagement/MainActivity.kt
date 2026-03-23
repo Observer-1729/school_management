@@ -19,40 +19,14 @@ class MainActivity : ComponentActivity() {
                 val pd = PaddingValues()
                 initCloudinary(this)
 
-
-                val students = listOf(
-                    Student(1,"Rahul Patel"),
-                    Student(2,"Amit Shah"),
-                    Student(3,"Riya Patel"),
-                    Student(4,"Neha Sharma")
+                val dummyResults = listOf(
+                    "PA1" to 72.5f,
+                    "PA2" to 81.0f,
+                    "PA3" to 76.3f
                 )
 
-                val subjects = listOf(
-                    "Maths",
-                    "English",
-                    "Hindi",
-                    "Science",
-                    "Physics",
-                    "Chemistry",
-                    "Biology",
-                    "Computer",
-                    "History",
-                    "Geography",
-                    "Economics",
-                    "Civics",
-                    "Moral Values",
-                    "General Knowledge"
-                )
 
-                val teacherAssignments = listOf(
-                    SubjectClass("Maths", "Class 1"),
-                    SubjectClass("Maths", "Class 3"),
-                    SubjectClass("Maths", "Class 5"),
-                    SubjectClass("Maths", "Class 7"),
-                    SubjectClass("Maths", "Class 9"),
-                    SubjectClass("Science", "Class 2"),
-                    SubjectClass("Science", "Class 4")
-                )
+
 
 //                LoginScreen()
 //                WelcomePage()
@@ -68,6 +42,7 @@ class MainActivity : ComponentActivity() {
 //                )
 //                AttendanceScreen()
               AppNavigation(navController = navController)
+//                ResultHistoryScreen(Modifier, dummyResults)
 
 
 
